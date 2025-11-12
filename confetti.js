@@ -1,97 +1,59 @@
-<!doctype html>
-<html>
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Contractor — Omni</title>
-<link rel="stylesheet" href="theme.css">
-</head>
-<body>
-<div style="max-width:1000px;margin:18px auto">
-  <div style="display:flex;justify-content:space-between;align-items:center">
-    <div style="display:flex;gap:12px;align-items:center">
-      <img id="logoUploadPreview" src="https://via.placeholder.com/80" style="height:48px;width:48px;border-radius:8px"/>
-      <div>
-        <div style="font-weight:800">Contractor Portal</div>
-        <div class="small">Complete your profile</div>
-      </div>
-    </div>
-    <div>
-      <button class="btn" onclick="location.href='dashboard.html'">Dashboard</button>
-    </div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 320px;gap:12px;margin-top:12px">
-    <div>
-      <div class="card">
-        <div style="font-weight:800">Profile</div>
-        <input id="name" class="small-input" placeholder="Company / Name"><br><br>
-        <input id="phone" class="small-input" placeholder="Phone"><br><br>
-        <select id="service" class="small-input">
-          <option value="property">Property Contractor</option>
-          <option value="cleaning">Cleaning</option>
-          <option value="security">Security</option>
-        </select><br><br>
-        <div id="specificFields"></div>
-        <br>
-        <button id="saveProfile" class="btn">Save Profile</button>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <div style="font-weight:800">Chat & Messaging</div>
-        <div id="chatBox" style="height:220px;overflow:auto;background:#050417;padding:8px;border-radius:8px;margin-top:8px"></div>
-        <input id="chatMsg" class="small-input" placeholder="Message"><button id="chatSend" class="btn">Send</button>
-      </div>
-    </div>
-
-    <aside>
-      <div class="card">
-        <div style="font-weight:800">Billing</div>
-        <div class="small">Status: <span id="pbStatus">Free</span></div>
-        <div style="margin-top:8px">
-          <button id="setBadge" class="btn">Set Badge</button>
-        </div>
-      </div>
-    </aside>
-  </div>
-</div>
-
-<script type="module">
-import { upsertContractor } from "./Firebase-bridge.js";
-
-function renderFields(s){
-  const el = document.getElementById('specificFields');
-  el.innerHTML = '';
-  if (s === 'property'){
-    el.innerHTML = `<select class="small-input"><option>House</option><option>Apartment</option><option>Commercial</option></select>`;
-  } else if (s === 'cleaning'){
-    el.innerHTML = `<label class="small">Equipment</label><input class="small-input" placeholder="Equipment details">`;
-  } else {
-    el.innerHTML = `<input class="small-input" placeholder="Speciality">`;
+// simple confetti / graffiti spark effect
+export default {
+  _ctx: null,
+  _w:0,_h:0,
+  init(canvas){
+    if (!canvas) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    this._ctx = canvas.getContext('2d');
+    this._w = canvas.width; this._h = canvas.height;
+    window.addEventListener('resize', ()=>{ canvas.width = window.innerWidth; canvas.height = window.innerHeight; this._w = canvas.width; this._h = canvas.height; });
+    this._particles = [];
+    this._running = false;
+  },
+  _rand(min,max){ return Math.random()*(max-min)+min; },
+  shoot(count=80){
+    if (!this._ctx) return;
+    for (let i=0;i<count;i++){
+      this._particles.push({
+        x: this._rand(0,this._w),
+        y: -10 - this._rand(0,200),
+        vx: this._rand(-1.5,1.5),
+        vy: this._rand(1,4),
+        size: Math.round(this._rand(4,10)),
+        life: this._rand(60,160),
+        color: `hsl(${Math.round(this._rand(0,360))},80%,60%)`,
+        rot: this._rand(0,Math.PI*2)
+      });
+    }
+    if (!this._running) this._loop();
+  },
+  _loop(){
+    this._running = true;
+    const ctx = this._ctx;
+    const that = this;
+    function frame(){
+      ctx.clearRect(0,0,that._w,that._h);
+      const p = that._particles;
+      for (let i=p.length-1;i>=0;i--){
+        const o = p[i];
+        o.x += o.vx;
+        o.y += o.vy;
+        o.vy += 0.06; // gravity
+        o.rot += 0.1;
+        o.life--;
+        ctx.save();
+        ctx.translate(o.x,o.y);
+        ctx.rotate(o.rot);
+        ctx.fillStyle = o.color;
+        ctx.fillRect(-o.size/2,-o.size/2,o.size,o.size*0.6);
+        ctx.restore();
+        if (o.y > that._h + 50 || o.life <= 0) p.splice(i,1);
+      }
+      if (p.length>0) requestAnimationFrame(frame);
+      else that._running = false;
+    }
+    requestAnimationFrame(frame);
   }
-}
-
-document.getElementById('service').addEventListener('change', e=>renderFields(e.target.value));
-renderFields(document.getElementById('service').value);
-
-document.getElementById('saveProfile').addEventListener('click', async ()=>{
-  const p = {
-    id: "c_" + Date.now(),
-    name: document.getElementById('name').value,
-    phone: document.getElementById('phone').value,
-    service: document.getElementById('service').value,
-    created: new Date().toISOString()
-  };
-  await upsertContractor(p.phone||p.id, p);
-  alert("Profile saved. Admin will be notified.");
-});
-
-// chat send (writes to Firestore messages)
-document.getElementById('chatSend').addEventListener('click', async ()=>{
-  const t = document.getElementById('chatMsg').value.trim();
-  if (!t) return;
-  // For demo just append locally
-  const box = document.getElementById('chatBox');
-  const el = document.createElement('div'); el.textContent = `You: ${t}`; box.prepend(el);
-  document.getElementById('chatMsg').value='';
-});
-</script>
-</body>
-</html>
+};
