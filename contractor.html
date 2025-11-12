@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Contractor — Omni</title>
+<link rel="stylesheet" href="theme.css">
+<script type="module" src="Firebase-bridge.js" defer></script>
+<style>
+.container{max-width:1000px;margin:18px auto;padding:12px}
+.card{background:var(--panel);border-radius:12px;padding:12px;border:1px solid #ffffff12}
+.small-input{padding:8px;border-radius:8px;background:#080716;border:1px solid #ffffff12;color:var(--ink);width:100%}
+.chat-box{height:220px;overflow:auto;background:#050417;padding:8px;border-radius:8px}
+.profile-logo{height:48px;width:48px;border-radius:8px;object-fit:cover}
+</style>
+</head>
+<body>
+<div class="container">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div style="display:flex;gap:12px;align-items:center">
+      <img id="logoUploadPreview" class="profile-logo" src="https://via.placeholder.com/80" alt="logo"/>
+      <div>
+        <div style="font-weight:800">Contractor Portal</div>
+        <div class="small">Complete your profile</div>
+      </div>
+    </div>
+    <div><button class="btn" onclick="location.href='dashboard.html'">Dashboard</button></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:12px;margin-top:12px">
+    <div>
+      <div class="card">
+        <div style="font-weight:800">Profile</div>
+        <form id="contractorForm">
+          <input name="company" id="company" class="small-input" placeholder="Company / Name" required><br><br>
+          <input name="name" id="name" class="small-input" placeholder="Contact Person" required><br><br>
+          <input name="phone" id="phone" class="small-input" placeholder="Phone" required><br><br>
+          <select name="service" id="service" class="small-input" required>
+            <option value="property">Property Contractor</option>
+            <option value="cleaning">Cleaning</option>
+            <option value="security">Security</option>
+            <option value="garden">Garden</option>
+          </select><br><br>
+          <div id="specificFields"></div><br>
+          <button type="submit" id="saveProfile" class="btn">Save Profile</button>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div style="font-weight:800">Chat & Messaging</div>
+        <div id="chatBox" class="chat-box" aria-live="polite"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="chatMsg" class="small-input" placeholder="Message">
+          <button id="chatSend" class="btn" type="button">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <div style="font-weight:800">Billing</div>
+        <div class="small">Status: <span id="pbStatus">Free</span></div>
+        <div style="margin-top:8px">
+          <button id="setBadge" class="btn">Set Badge</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- JS Logic -->
+<script type="module">
+import { upsertContractor } from './Firebase-bridge.js';
+
+function renderFields(s){
+  const el = document.getElementById('specificFields');
+  el.innerHTML = '';
+  if (s === 'property'){
+    el.innerHTML = `<label class="small">Property types</label>
+    <select class="small-input"><option>House</option><option>Apartment</option><option>Commercial</option></select><br><br>
+    <input class="small-input" placeholder="License / Registration no.">`;
+  } else if (s === 'cleaning'){
+    el.innerHTML = `<label class="small">Cleaning Services</label>
+    <select class="small-input"><option>Home</option><option>Office</option><option>Carpet</option></select>`;
+  } else {
+    el.innerHTML = `<input class="small-input" placeholder="Speciality">`;
+  }
+}
+
+document.getElementById('service').addEventListener('change', (e)=>renderFields(e.target.value));
+renderFields(document.getElementById('service').value);
+
+/* Save profile via Firebase bridge (local + cloud) */
+document.getElementById('saveProfile').addEventListener('click', async (e)=>{
+  e.preventDefault();
+  const p = {
+    id: "c_" + Date.now(),
+    name: document.getElementById('name').value,
+    phone: document.getElementById('phone').value,
+    service: document.getElementById('service').value,
+    company: document.getElementById('company').value,
+    created: new Date().toISOString()
+  };
+  const res = await upsertContractor(p.phone||p.id, p);
+  if (res.ok) alert("✅ Profile saved. Admin will be notified.");
+  else alert("❌ Failed to save profile");
+});
+
+/* Local chat simulation */
+document.getElementById('chatSend').addEventListener('click', ()=>{
+  const t = document.getElementById('chatMsg').value.trim();
+  if (!t) return;
+  const box = document.getElementById('chatBox');
+  const el = document.createElement('div');
+  el.textContent = `You: ${t}`;
+  el.style.marginBottom = '6px';
+  box.prepend(el);
+  document.getElementById('chatMsg').value = '';
+});
+
+/* Send contractor signup to backend (Render → Telegram) */
+document.querySelector("#contractorForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const data = {
+    name: form.name.value,
+    phone: form.phone.value,
+    service: form.service.value,
+    company: form.company.value
+  };
+  const res = await fetch("/api/contractor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  const result = await res.json();
+  if (result.ok) alert("✅ Contractor signup sent successfully!");
+  else alert("❌ Failed to send contractor signup.");
+  form.reset();
+});
+</script>
+</body>
+</html>

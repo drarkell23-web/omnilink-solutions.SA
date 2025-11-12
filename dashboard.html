@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Contractor Dashboard — OmniSolutions</title>
+<link rel="stylesheet" href="theme.css">
+<script type="module" src="Firebase-bridge.js" defer></script>
+<style>
+.container{max-width:1200px;margin:18px auto;padding:12px}
+.header-row{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.logo-slot img{height:48px;width:48px;object-fit:contain;border-radius:8px}
+.card{background:var(--panel);border-radius:12px;padding:12px;border:1px solid #ffffff14}
+.small{font-size:13px;color:var(--muted)}
+.floating-admin{position:fixed;right:12px;bottom:12px;border-radius:999px;padding:6px 8px;background:linear-gradient(90deg,var(--brand1),var(--brand2));color:#fff;font-size:12px;display:none}
+.messages-list{height:260px;overflow:auto;background:#050417;padding:8px;border-radius:8px}
+.profile-logo{height:40px;width:40px;object-fit:cover;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-row">
+    <div style="display:flex;gap:12px;align-items:center">
+      <img id="companyLogo" class="profile-logo" src="https://via.placeholder.com/80x40?text=Logo" alt="logo">
+      <div>
+        <div style="font-weight:800">Contractor Dashboard</div>
+        <div class="small">Manage leads, chats, reviews & billing</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="card small">Leads: <strong id="leadCount">0</strong></div>
+      <button id="logoutBtn" class="btn">Logout</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 360px;gap:12px;margin-top:12px">
+    <div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:800">Messaging</div>
+          <div class="small">Live messages</div>
+        </div>
+        <div id="messagesList" class="messages-list" aria-live="polite"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="msgToId" class="small-input" placeholder="Contractor ID or phone">
+          <input id="msgText" class="small-input" style="flex:1" placeholder="Type a message">
+          <button id="sendMsg" class="btn">Send</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:800">My Jobs</div>
+          <div class="small">Recent activity</div>
+        </div>
+        <div id="jobsList" style="margin-top:10px" class="small">No jobs yet</div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:800">Upload Review (1 free)</div>
+          <div class="small">Premium unlock for unlimited</div>
+        </div>
+        <form id="reviewForm" style="margin-top:8px">
+          <input id="rvName" class="small-input" placeholder="Client name" required><br><br>
+          <select id="rvStars" class="small-input" required>
+            <option value="1">1 ★</option>
+            <option value="2">2 ★★</option>
+            <option value="3">3 ★★★</option>
+            <option value="4">4 ★★★★</option>
+            <option value="5">5 ★★★★★</option>
+          </select><br><br>
+          <textarea id="rvText" class="small-input" rows="3" placeholder="Review text"></textarea><br><br>
+          <input type="file" id="rvImages" accept="image/*" multiple><br><br>
+          <button class="btn" type="submit">Submit Review</button>
+        </form>
+      </div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <div style="font-weight:800">Profile & Preferences</div>
+        <div style="margin-top:8px">
+          <input id="cName" class="small-input" placeholder="Company name"><br><br>
+          <select id="serviceType" class="small-input">
+            <option value="property">Property Contractor</option>
+            <option value="cleaning">Cleaning</option>
+            <option value="security">Security</option>
+            <option value="garden">Garden</option>
+            <option value="other">Other</option>
+          </select><br><br>
+          <div id="serviceSpecifics"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:800">Billing & Badges</div>
+          <div id="badgePreview" class="small">Bronze</div>
+        </div>
+        <div style="margin-top:8px">
+          <button id="upgradeBtn" class="btn">Upgrade to Premium+</button>
+          <div class="small" style="margin-top:8px">Status: <span id="billingStatus">Free</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div style="font-weight:800">Telegram</div>
+        <input id="tgId" class="small-input" placeholder="Telegram Chat ID">
+        <input id="tgTokenLocal" class="small-input" placeholder="Bot Token (optional)">
+        <div class="small" style="margin-top:8px">Add chat ID to receive leads here (optional)</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<button id="adminBtn" class="floating-admin" style="display:none">Admin</button>
+
+<script type="module">
+import { onLeadsSnapshot, createLead, upsertContractor, createReview } from './Firebase-bridge.js';
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+/* live lead count */
+const leadCountEl = document.getElementById('leadCount');
+const unsubLeads = onLeadsSnapshot(({count, docs})=>{
+  leadCountEl.textContent = count;
+});
+
+/* service-specific fields */
+document.getElementById('serviceType').addEventListener('change', (e)=>renderServiceFields(e.target.value));
+function renderServiceFields(type){
+  const container = document.getElementById('serviceSpecifics');
+  container.innerHTML = "";
+  if (type === 'property'){
+    container.innerHTML = `
+      <select id="propTypes" class="small-input">
+        <option>Residential - Houses</option>
+        <option>Residential - Apartments</option>
+        <option>Commercial</option>
+        <option>Industrial</option>
+      </select><br><br>
+      <input id="licenseNo" class="small-input" placeholder="License / Registration no.">
+    `;
+  } else if (type === 'cleaning'){
+    container.innerHTML = `
+      <select class="small-input"><option>Home Cleaning</option><option>Office Cleaning</option><option>Carpet</option></select>
+    `;
+  } else {
+    container.innerHTML = `<input class="small-input" placeholder="Service specialization">`;
+  }
+}
+renderServiceFields(document.getElementById('serviceType').value);
+
+/* messaging: write to Firestore */
+document.getElementById('sendMsg').addEventListener('click', async ()=>{
+  const to = document.getElementById('msgToId').value.trim() || "owner";
+  const text = document.getElementById('msgText').value.trim();
+  if (!text) return;
+  try {
+    const { db } = await import('./Firebase-bridge.js');
+    await addDoc(collection(db,"messages"), { to, text, from: "owner", created: new Date().toISOString() });
+    document.getElementById('msgText').value = '';
+  } catch(e){ alert("Failed to send"); }
+});
+
+/* live messages (last 50) */
+import { query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+(async ()=>{
+  const { db } = await import('./Firebase-bridge.js');
+  const q = query(collection(db, "messages"), orderBy("created","desc"));
+  onSnapshot(q, snap => {
+    const list = document.getElementById('messagesList');
+    list.innerHTML = '';
+    let i = 0;
+    snap.forEach(d => {
+      if (i++ > 50) return;
+      const data = d.data();
+      const el = document.createElement('div');
+      el.style.padding = '6px 0'; el.style.borderBottom='1px solid #ffffff06';
+      el.innerHTML = `<div style="font-weight:700">${data.from} → ${data.to}</div><div class="small">${data.text}</div>`;
+      list.appendChild(el);
+    });
+  });
+})();
+
+/* review upload (demo): creates contractor_reviews doc with images as object URLs */
+document.getElementById('reviewForm').addEventListener('submit', async (ev)=>{
+  ev.preventDefault();
+  const name = document.getElementById('rvName').value;
+  const stars = Number(document.getElementById('rvStars').value);
+  const text = document.getElementById('rvText').value;
+  const files = document.getElementById('rvImages').files;
+  const images = [];
+  for (let i=0;i<files.length;i++){
+    images.push(URL.createObjectURL(files[i]));
+  }
+  const res = await createReview({ name, stars, text, images, contractorId: 'self' });
+  if (res.ok) {
+    alert("Review submitted (pending moderation).");
+    document.getElementById('reviewForm').reset();
+  } else alert("Failed to submit review");
+});
+
+/* upgrade demo */
+document.getElementById('upgradeBtn').addEventListener('click', ()=>{
+  document.getElementById('billingStatus').textContent = "Trial - Premium+";
+  document.getElementById('badgePreview').textContent = "Premium+";
+});
+
+document.getElementById('logoutBtn').addEventListener('click', ()=> location.href='index.html');
+
+if (localStorage.getItem('adminLoggedIn')) {
+  const btn = document.getElementById('adminBtn');
+  btn.style.display='block';
+  btn.onclick = ()=> location.href='admin-review.html';
+}
+</script>
+</body>
+</html>

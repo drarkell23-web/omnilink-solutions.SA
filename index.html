@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OmniSolutions — All-in-One Service Network</title>
+<link rel="stylesheet" href="theme.css">
+<script type="module" src="Firebase-bridge.js" defer></script>
+<style>
+.container {max-width: 1000px; margin: 0 auto; padding: 16px;}
+.card {background: var(--panel); border: 1px solid #ffffff12; border-radius: 12px; padding: 16px; margin-bottom: 12px;}
+.small-input {padding: 8px; border-radius: 8px; border: 1px solid #ffffff12; background: #080716; color: var(--ink); width: 100%;}
+.btn {background: var(--accent); border: none; color: white; padding: 10px 16px; border-radius: 8px; cursor: pointer;}
+.btn:hover {opacity: 0.9;}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1 style="text-align:center;font-weight:800;">OmniSolutions</h1>
+  <p style="text-align:center;">Your all-in-one platform for property, maintenance, and contractor services.</p>
+
+  <div class="card">
+    <h2>📩 Request a Service</h2>
+    <form id="leadForm">
+      <input name="name" class="small-input" placeholder="Your Name" required><br><br>
+      <input name="phone" class="small-input" placeholder="Phone Number" required><br><br>
+      <input name="email" class="small-input" placeholder="Email"><br><br>
+      <select name="service" class="small-input" required>
+        <option value="">Select a Service</option>
+        <option value="Plumbing">Plumbing</option>
+        <option value="Electrical">Electrical</option>
+        <option value="Cleaning">Cleaning</option>
+        <option value="Gardening">Gardening</option>
+        <option value="Painting">Painting</option>
+      </select><br><br>
+      <textarea name="message" class="small-input" placeholder="Describe your issue" rows="4"></textarea><br><br>
+      <button type="submit" class="btn">Submit Request</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>⭐ Why Choose Us</h2>
+    <ul>
+      <li>Verified and Trusted Contractors</li>
+      <li>Instant Notifications via Telegram</li>
+      <li>24/7 Availability</li>
+      <li>Affordable and Transparent Pricing</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>💬 Reviews</h2>
+    <p>We’ve helped hundreds of clients find top-rated service providers.</p>
+    <p><i>"Amazing service — quick response and professional!"</i> ⭐⭐⭐⭐⭐</p>
+    <p><i>"They handled my home repairs perfectly. Highly recommend!"</i> ⭐⭐⭐⭐⭐</p>
+  </div>
+</div>
+
+<!-- JavaScript logic -->
+<script type="module">
+import { createLead } from './Firebase-bridge.js';
+
+document.querySelector("#leadForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const data = {
+    name: form.name.value,
+    phone: form.phone.value,
+    email: form.email.value,
+    service: form.service.value,
+    message: form.message.value
+  };
+
+  // Save to Firestore via Firebase bridge (for your own dashboard)
+  const fbRes = await createLead(data);
+  console.log("Firestore lead response:", fbRes);
+
+  // Also send to Render backend (→ Telegram)
+  const res = await fetch("/api/lead", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+  const result = await res.json();
+  if (result.ok) {
+    alert("✅ Your request has been sent! We'll contact you shortly.");
+    form.reset();
+  } else {
+    alert("❌ Something went wrong. Please try again.");
+  }
+});
+</script>
+</body>
+</html>

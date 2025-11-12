@@ -1,0 +1,27 @@
+:root{
+  --bg:#0b0a18; --panel:#141229; --ink:#f6f7fb; --muted:#aeb2cf;
+  --brand1:#8a5cff; --brand2:#6a4cff; --ring:#ffffff22;
+  --success:#23d59f; --danger:#ff6677;
+  font-family: 'Poppins', system-ui, Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:inherit;transition:background .25s,color .25s}
+.container{width:min(1200px,94vw);margin:0 auto;padding:12px}
+.card{background:var(--panel);border-radius:12px;padding:12px;border:1px solid #ffffff12;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+.btn{background:linear-gradient(90deg,var(--brand1),var(--brand2));border:none;border-radius:10px;color:#fff;padding:8px 12px;font-weight:700;cursor:pointer}
+.small-input{padding:8px 10px;border-radius:8px;border:1px solid #ffffff12;background:#0c0b14;color:var(--ink);width:100%}
+.small{font-size:13px;color:var(--muted)}
+.logo{font-weight:900;background:linear-gradient(135deg,var(--brand1),var(--brand2));-webkit-background-clip:text;color:transparent;font-size:20px;margin-bottom:12px}
+.badge-icon{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;font-weight:700}
+.badge-bronze{background:linear-gradient(90deg,#8c5a20,#6b4414);color:#fff}
+.badge-silver{background:linear-gradient(90deg,#d1d5db,#9aa3ad);color:#081018}
+.badge-gold{background:linear-gradient(90deg,#f6c84c,#f0b020);color:#081018}
+.badge-platinum{background:linear-gradient(90deg,#bcdfff,#88e0f4);color:#081018}
+.badge-premium{background:linear-gradient(90deg,#7be6c7,#4bd8c0);color:#081018}
+
+/* responsive niceties */
+@media (max-width:900px){
+  .container{padding:8px}
+  .sidebar{width:100%}
+}
