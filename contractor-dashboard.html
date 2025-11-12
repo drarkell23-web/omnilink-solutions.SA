@@ -1,117 +1,163 @@
 <!doctype html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contractor Dashboard</title><link rel="stylesheet" href="theme.css"></head>
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Contractor Dashboard — Omni</title>
+<link rel="stylesheet" href="theme.css">
+</head>
 <body>
-<div style="padding:18px;">
-  <header style="display:flex;gap:12px;align-items:center;">
-    <div style="width:80px;height:80px;border-radius:12px;overflow:hidden;background:#111;"><img id="logoPreview" src="https://via.placeholder.com/80" style="width:100%;height:100%;object-fit:cover"></div>
-    <div>
-      <h2 id="contractorTitle">Contractor Dashboard</h2>
-      <div class="small">Contractor ID: <span id="contractorId">--</span></div>
+<div style="display:flex;min-height:100vh">
+  <!-- SIDE PANEL -->
+  <aside style="width:320px;padding:18px" class="card">
+    <div style="display:flex;gap:12px;align-items:center">
+      <img id="logoPreview" src="/assets/default-logo.png" alt="logo" style="width:64px;height:64px;border-radius:8px;object-fit:cover;background:#111">
+      <div>
+        <div id="companyDisplay" style="font-weight:800">Contractor</div>
+        <div class="small">ID: <span id="contractorId">--</span></div>
+      </div>
     </div>
-    <div style="margin-left:auto;display:flex;gap:8px;">
-      <button id="themeBtn" class="btn">Theme</button>
-      <button id="logoutBtn" class="btn">Logout</button>
+
+    <div style="margin-top:12px">
+      <div style="margin-bottom:8px"><button id="editProfileBtn" class="btn" style="width:100%">Edit Profile</button></div>
+      <div style="margin-bottom:8px"><button id="messagesBtn" class="btn" style="width:100%">Messages</button></div>
+      <div style="margin-bottom:8px"><button id="reviewsBtn" class="btn" style="width:100%">Reviews</button></div>
+      <div style="margin-bottom:8px"><button id="analyticsBtn" class="btn" style="width:100%">Analytics</button></div>
+      <div style="margin-bottom:8px"><button id="billingBtn" class="btn" style="width:100%">Billing</button></div>
+      <div style="margin-bottom:8px"><button id="settingsBtn" class="btn" style="width:100%">Settings</button></div>
     </div>
-  </header>
 
-  <main style="display:grid;grid-template-columns:320px 1fr;gap:12px;margin-top:18px">
-    <aside>
-      <div class="card">
-        <h3>Profile</h3>
-        <input id="company" class="small-input" placeholder="Company name">
-        <input id="contactName" class="small-input" placeholder="Contact name">
-        <input id="phone" class="small-input" placeholder="Phone">
-        <select id="serviceType" class="small-input">
-          <option>Property</option><option>Cleaning</option><option>Security</option><option>Garden</option>
-        </select>
-        <label class="small">Upload Logo</label>
-        <input id="logoFile" type="file" accept="image/*" class="small-input">
-        <button id="saveProfile" class="btn">Save Profile</button>
-      </div>
+    <div style="margin-top:18px">
+      <button id="logoutBtn" class="btn" style="width:100%">Logout</button>
+    </div>
+  </aside>
 
-      <div class="card">
-        <h3>Telegram</h3>
-        <input id="telegramToken" class="small-input" placeholder="Telegram Bot Token">
-        <input id="telegramChatId" class="small-input" placeholder="Telegram Chat ID">
-        <button id="saveTelegram" class="btn">Save & Test</button>
-        <div style="margin-top:8px">Status: <span id="telegramStatus">Unknown</span></div>
-      </div>
-
-      <div class="card">
-        <h3>Subscription</h3>
-        <div id="subInfo">Free plan</div>
-        <button id="upgradeBtn" class="btn">Upgrade to Premium</button>
-      </div>
-    </aside>
-
-    <section>
-      <div class="card">
-        <h3>Messages</h3>
-        <div id="messages" style="min-height:160px;">No messages yet</div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <input id="outMsg" class="small-input" placeholder="Message to admin or client">
-          <button id="sendOut" class="btn">Send</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Analytics</h3>
-        <div id="analytics">Graph placeholder - no data yet</div>
-      </div>
-
-      <div class="card">
-        <h3>Reviews</h3>
-        <div id="reviewsList"></div>
-        <p class="small">Free plan: 1 review upload (single image). Premium: multiple images, gallery, edit.</p>
-        <form id="reviewForm">
-          <input name="r_contractor" id="r_contractor" class="small-input" placeholder="Contractor name">
-          <input name="r_name" id="r_name" class="small-input" placeholder="Reviewer name">
-          <select name="r_rating" id="r_rating" class="small-input"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select>
-          <textarea name="r_comment" id="r_comment" class="small-input" placeholder="Comment"></textarea>
-          <input type="file" name="r_images" id="r_images" multiple accept="image/*" class="small-input">
-          <button class="btn" type="submit">Upload Review</button>
-        </form>
-      </div>
-    </section>
+  <!-- MAIN AREA -->
+  <main style="flex:1;padding:18px">
+    <div id="panelArea" class="card">
+      <!-- dynamic content loads here -->
+      <h2>Welcome to your dashboard</h2>
+      <div class="small">Use the left menu to manage profile, messages, reviews, and billing.</div>
+    </div>
   </main>
 </div>
 
-<script>
-document.getElementById('saveProfile').addEventListener('click', async ()=>{
-  const profile = {
-    company: document.getElementById('company').value,
-    name: document.getElementById('contactName').value,
-    phone: document.getElementById('phone').value,
-    service: document.getElementById('serviceType').value
-  };
-  const res = await fetch('/api/contractor', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(profile) });
-  const j = await res.json();
-  if (j.ok) alert('Profile saved & admin notified'); else alert('Failed');
-});
+<script type="module">
+// client-side controller for contractor dashboard panels
+async function fetchContractors() {
+  const r = await fetch('/api/contractors'); const j = await r.json(); return j.contractors || [];
+}
+let contractors = await fetchContractors();
+let currentContractor = contractors[0] || null;
 
-document.getElementById('saveTelegram').addEventListener('click', async ()=>{
-  const token = document.getElementById('telegramToken').value;
-  const chat = document.getElementById('telegramChatId').value;
-  const res = await fetch('/api/contractor', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: document.getElementById('contactName').value, company: document.getElementById('company').value, phone: document.getElementById('phone').value, service: document.getElementById('serviceType').value, telegramToken: token, telegramChatId: chat })});
-  const j = await res.json();
-  if (j.ok) alert('Saved - admin notified'); else alert('Failed');
-});
+function renderProfilePanel() {
+  const p = document.getElementById('panelArea');
+  p.innerHTML = `<h3>Profile</h3>
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:12px">
+      <div>
+        <input id="company" class="small-input" placeholder="Company name" value="${currentContractor?.company||''}"/>
+        <input id="contactName" class="small-input" placeholder="Contact name" value="${currentContractor?.name||''}"/>
+        <input id="phone" class="small-input" placeholder="Phone" value="${currentContractor?.phone||''}"/>
+        <select id="serviceType" class="small-input">
+          <option ${currentContractor?.service==='Property'?'selected':''}>Property</option>
+          <option ${currentContractor?.service==='Cleaning'?'selected':''}>Cleaning</option>
+          <option ${currentContractor?.service==='Security'?'selected':''}>Security</option>
+          <option ${currentContractor?.service==='Garden'?'selected':''}>Garden</option>
+        </select>
+        <div style="margin-top:8px"><button id="saveProfile" class="btn">Save</button></div>
+      </div>
+      <div>
+        <div style="font-weight:800">Logo</div>
+        <img id="logoPreviewPanel" src="${currentContractor?.logoUrl||'/assets/default-logo.png'}" style="width:160px;height:160px;border-radius:12px;object-fit:cover;background:#111"/>
+        <input id="logoFile" type="file" accept="image/*" class="small-input" style="margin-top:8px"/>
+      </div>
+    </div>`;
+  document.getElementById('saveProfile').addEventListener('click', async ()=>{
+    const payload = {
+      id: currentContractor?.id,
+      company: document.getElementById('company').value,
+      name: document.getElementById('contactName').value,
+      phone: document.getElementById('phone').value,
+      service: document.getElementById('serviceType').value
+    };
+    const res = await fetch('/api/contractor', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+    const j = await res.json();
+    if (j.ok) alert('Saved'); else alert('Failed');
+  });
+  document.getElementById('logoFile').addEventListener('change', async (e)=>{
+    const f = e.target.files[0];
+    if (!f) return;
+    const fd = new FormData(); fd.append('images', f);
+    const r = await fetch('/api/review', { method:'POST', body: fd });
+    const j = await r.json();
+    if (j.ok && j.images && j.images.length) {
+      const logo = j.images[0];
+      await fetch('/api/contractor', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: currentContractor?.id, logoUrl:logo }) });
+      document.getElementById('logoPreviewPanel').src = logo;
+      alert('Logo uploaded');
+    } else alert('Upload failed');
+  });
+}
 
-document.getElementById('reviewForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const f = e.target;
-  const form = new FormData();
-  form.append('contractor', f.r_contractor.value);
-  form.append('name', f.r_name.value);
-  form.append('rating', f.r_rating.value);
-  form.append('comment', f.r_comment.value);
-  const files = document.getElementById('r_images').files;
-  for (let i=0;i<files.length && i<6;i++) form.append('images', files[i]);
-  const res = await fetch('/api/review', { method:'POST', body: form });
-  const j = await res.json();
-  if (j.ok) alert('Review uploaded; admin notified'); else alert('Failed');
+function renderMessagesPanel() {
+  const p = document.getElementById('panelArea');
+  p.innerHTML = `<h3>Messages</h3><div id="msgs" style="min-height:200px;background:#070417;padding:12px;border-radius:8px">Loading...</div>
+    <div style="display:flex;gap:8px;margin-top:8px"><input id="outMsg" class="small-input" placeholder="Message to admin"><button id="sendOut" class="btn">Send</button></div>`;
+  document.getElementById('sendOut').addEventListener('click', async ()=>{
+    const message = document.getElementById('outMsg').value.trim();
+    if(!message) return alert('Type a message');
+    const r = await fetch('/api/message', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ contractorId: currentContractor?.id || currentContractor?.phone, message }) });
+    const j = await r.json();
+    if (j.ok) { alert('Sent'); document.getElementById('outMsg').value=''; } else alert('Failed');
+  });
+}
+
+function renderReviewsPanel() {
+  const p = document.getElementById('panelArea');
+  p.innerHTML = `<h3>Reviews</h3><div id="reviewsList">Loading...</div>`;
+  // fetch reviews and filter by contractor
+  (async()=>{
+    const r = await fetch('/api/logs/reviews'); const arr = await r.json();
+    const filtered = arr.filter(rv => rv.contractor === currentContractor?.company || rv.contractor === currentContractor?.id);
+    document.getElementById('reviewsList').innerHTML = filtered.map(f => `<div class="mini"><strong>${f.name}</strong> — ${f.rating} ⭐ <div class="small">${f.comment}</div></div>`).join('') || '<div class="small">No reviews yet</div>';
+  })();
+}
+
+function renderAnalyticsPanel() {
+  const p = document.getElementById('panelArea');
+  p.innerHTML = `<h3>Analytics</h3><div id="chart" style="min-height:200px">Graph placeholder — leads: <span id="leadCount">0</span></div>`;
+  // simple stat
+  (async()=>{
+    const r = await fetch('/api/logs/leads'); const leads = await r.json();
+    const count = leads.filter(l => l.contractorId === currentContractor?.id || l.contractorId === currentContractor?.phone).length;
+    document.getElementById('leadCount').textContent = count;
+  })();
+}
+
+function renderBillingPanel() {
+  const p = document.getElementById('panelArea');
+  p.innerHTML = `<h3>Billing</h3><div class="small">Subscription status: <strong>${currentContractor?.subscription?.plan || 'Free'}</strong></div><div style="margin-top:8px"><button id="upgrade" class="btn">Request Upgrade</button></div>`;
+  document.getElementById('upgrade').addEventListener('click', ()=> alert('Upgrade flow — contact admin.'));
+}
+
+document.getElementById('editProfileBtn').addEventListener('click', renderProfilePanel);
+document.getElementById('messagesBtn').addEventListener('click', renderMessagesPanel);
+document.getElementById('reviewsBtn').addEventListener('click', renderReviewsPanel);
+document.getElementById('analyticsBtn').addEventListener('click', renderAnalyticsPanel);
+document.getElementById('billingBtn').addEventListener('click', renderBillingPanel);
+document.getElementById('settingsBtn').addEventListener('click', ()=> {
+  const p = document.getElementById('panelArea');
+  p.innerHTML = `<h3>Settings</h3><div class="small">Telegram token and chat ID saved in profile. To receive leads, set token & chat id in profile.</div>`;
 });
+document.getElementById('logoutBtn').addEventListener('click', ()=> { sessionStorage.removeItem('CONTRACTOR_ID'); window.location.href = '/'; });
+
+// initial render
+if (currentContractor) {
+  document.getElementById('companyDisplay').textContent = currentContractor.company || currentContractor.name || 'Contractor';
+  document.getElementById('contractorId').textContent = currentContractor.id || currentContractor.phone || '--';
+  renderProfilePanel();
+} else {
+  document.getElementById('panelArea').innerHTML = '<h3>No contractor found</h3><div class="small">Sign up or ask admin to add you.</div>';
+}
 </script>
 </body>
 </html>
