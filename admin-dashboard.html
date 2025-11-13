@@ -1,55 +1,150 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Admin — OmniSolutions</title>
-  <link rel="stylesheet" href="/admin-dashboard.css">
-  <script type="module" src="/admin-dashboard.js" defer></script>
+<meta charset="UTF-8">
+<title>Admin Dashboard — Omni-Solutions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="/admin-dashboard.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
-<body class="admin-bg">
-  <div class="admin-shell">
-    <header class="admin-top">
-      <div><h2>Admin Panel</h2><div class="muted">Manage contractors, badges, logs, subscriptions</div></div>
-      <div>
-        <button id="refreshBtn" class="primary">Refresh</button>
-      </div>
-    </header>
+<body>
 
-    <main class="admin-main">
-      <section class="left-col">
-        <div class="card">
-          <h3>Contractors</h3>
-          <div id="contractorsTable" class="table-wrap"></div>
+<div id="sidebar">
+    <div class="admin-head">
+        <img src="/assets/admin.png" class="admin-photo">
+        <h3>Admin Panel</h3>
+        <span class="admin-secret">SECURE</span>
+    </div>
+
+    <div class="nav-section">Navigation</div>
+    <div class="nav-item" onclick="showPage('overview')">📊 Overview</div>
+    <div class="nav-item" onclick="showPage('contractors')">🧱 Contractors</div>
+    <div class="nav-item" onclick="showPage('leads')">📨 Leads</div>
+    <div class="nav-item" onclick="showPage('reviews')">⭐ Reviews</div>
+    <div class="nav-item" onclick="showPage('badges')">🏅 Badges</div>
+    <div class="nav-item" onclick="showPage('billing')">💳 Subscriptions</div>
+    <div class="nav-item" onclick="showPage('messages')">✉ Support Messages</div>
+    <div class="nav-item" onclick="showPage('telegram')">🤖 Telegram Host</div>
+    <div class="nav-item" onclick="showPage('theme')">🎨 Theme Control</div>
+
+    <div class="nav-section">Account</div>
+    <div class="nav-item" onclick="logout()">🚪 Logout</div>
+</div>
+
+<div id="content">
+
+    <!-- OVERVIEW -->
+    <div class="page" id="overview">
+        <h1>Admin Overview</h1>
+
+        <div class="cards">
+            <div class="card">Total Contractors<br><span id="countContractors">0</span></div>
+            <div class="card">Total Leads<br><span id="countLeads">0</span></div>
+            <div class="card">Total Reviews<br><span id="countReviews">0</span></div>
         </div>
 
-        <div class="card" style="margin-top:12px">
-          <h3>Apply Badge</h3>
-          <form id="badgeForm">
-            <input name="contractorId" placeholder="Contractor ID or phone" required />
-            <input name="badge" placeholder="Badge name (platinum, gold, verified)" required />
-            <input name="adminSecret" placeholder="Admin secret" required />
-            <div style="margin-top:8px"><button class="primary">Apply Badge</button></div>
-            <div id="badgeResult" class="muted"></div>
-          </form>
-        </div>
-      </section>
+        <h2>Top Contractors</h2>
+        <div id="topContractors"></div>
+    </div>
 
-      <aside class="right-col">
-        <div class="card">
-          <h3>Logs</h3>
-          <select id="logSelect"><option value="leads">leads</option><option value="contractors">contractors</option><option value="reviews">reviews</option><option value="messages">messages</option></select>
-          <button id="loadLogsBtn" class="ghost">Load</button>
-          <div id="logsArea" class="log-area"></div>
-        </div>
+    <!-- CONTRACTOR MANAGEMENT -->
+    <div class="page" id="contractors">
+        <h1>Contractor Management</h1>
+        <input id="searchContractor" placeholder="Search contractor..." oninput="filterContractors()">
 
-        <div class="card" style="margin-top:12px">
-          <h3>Global Settings</h3>
-          <div><label>Default lead limit (free): <input id="leadLimit" type="number" value="10" min="0" /></label></div>
-          <div style="margin-top:8px"><button id="saveSettingsBtn" class="primary">Save Settings</button></div>
-        </div>
-      </aside>
-    </main>
-  </div>
+        <div id="contractorList"></div>
+    </div>
+
+    <!-- LEADS -->
+    <div class="page" id="leads">
+        <h1>All Leads</h1>
+        <div id="leadList"></div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="page" id="reviews">
+        <h1>Reviews Moderation</h1>
+        <div id="reviewList"></div>
+    </div>
+
+    <!-- BADGES -->
+    <div class="page" id="badges">
+        <h1>Assign Badges</h1>
+
+        <label>Select Contractor</label>
+        <select id="badgeContractor"></select>
+
+        <label>Select Badge</label>
+        <select id="badgeType">
+            <option value="bronze">Bronze</option>
+            <option value="silver">Silver</option>
+            <option value="gold">Gold</option>
+            <option value="platinum">Platinum</option>
+            <option value="diamond">Diamond</option>
+        </select>
+
+        <button onclick="applyBadge()">Assign Badge</button>
+
+        <div id="badgePreview"></div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="page" id="billing">
+        <h1>Subscription Control</h1>
+
+        <label>Select Contractor</label>
+        <select id="subContractor"></select>
+
+        <label>Subscription Tier</label>
+        <select id="subPlan">
+            <option value="none">No Plan</option>
+            <option value="basic-month">Basic — R350/m</option>
+            <option value="basic-6">Basic — R1999/6 months</option>
+            <option value="basic-year">Basic — R3599/year</option>
+            <option value="premium-month">Premium — R500/m</option>
+            <option value="premium-6">Premium — R2599/6 months</option>
+            <option value="premium-year">Premium — R4999/year</option>
+        </select>
+
+        <button onclick="applySubscription()">Apply Subscription</button>
+
+        <h2>Account Actions</h2>
+        <button onclick="deactivateAccount()">Deactivate</button>
+        <button onclick="activateAccount()">Activate</button>
+        <button onclick="deleteAccount()">Delete Account</button>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="page" id="messages">
+        <h1>Messages to Admin</h1>
+        <div id="messageList"></div>
+    </div>
+
+    <!-- TELEGRAM OVERRIDE -->
+    <div class="page" id="telegram">
+        <h1>Telegram Host Settings</h1>
+
+        <label>Admin Bot Token</label>
+        <input id="adminBotToken">
+
+        <label>Admin Chat ID</label>
+        <input id="adminChatId">
+
+        <button onclick="saveAdminTelegram()">Save Telegram Host</button>
+    </div>
+
+    <!-- THEME -->
+    <div class="page" id="theme">
+        <h1>Theme Control</h1>
+        <p>Change colour for ALL contractor dashboards</p>
+        <input type="color" id="globalThemeColor" onchange="applyGlobalTheme()">
+    </div>
+
+</div>
+
+<script src="/admin-dashboard.js"></script>
 </body>
 </html>
