@@ -28,9 +28,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 10000;
 
-const BOT_TOKEN = process.env.BOT_TOKEN || "";
-const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || "";
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "";
+const BOT_TOKEN = process.env.BOT_TOKEN || "8526401033:AAFrG8IH8xqQL_RTD7s7JLyxZpc8e8GOyyg";
+const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || "8187670531";
+const ADMIN_SECRET = process.env.ADMIN_SECRET || "omni$admin_2025_KEY!@34265346597843152";
 
 const DATA_DIR = path.join(__dirname, "data");
 const UPLOADS_DIR = path.join(__dirname, "uploads");
@@ -255,3 +255,4 @@ app.use((req,res)=>{
 });
 
 app.listen(PORT, ()=>console.log(`🚀 Server running on port ${PORT}`));
+
