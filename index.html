@@ -1,137 +1,96 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>OmniSolutions — All-in-One Service Network</title>
-
-  <!-- theme -->
-  <link rel="stylesheet" href="theme.css">
-
-  <!-- services list (large file) -->
-  <script src="services.js" defer></script>
-
-  <!-- main front-end logic -->
-  <script type="module" src="main.js" defer></script>
+  <link rel="stylesheet" href="/main.css">
+  <script type="module" src="/main.js" defer></script>
 </head>
-<body>
-  <div class="page-shell">
-
-    <!-- LEFT SIDEBAR (fixed) -->
-    <aside id="leftSidebar" class="left-sidebar">
+<body class="bg">
+  <div class="app">
+    <!-- Left sidebar: categories -->
+    <aside class="sidebar" aria-label="Categories">
       <div class="brand">
-        <div class="logo-mini"></div>
-        <div class="brand-text">
-          <div class="title">OmniSolutions</div>
-          <div class="subtitle">All-in-One Service Network</div>
-        </div>
+        <div class="logo" id="mainLogo">OMNI</div>
+        <h1>OmniSolutions</h1>
       </div>
 
-      <div class="sidebar-actions">
-        <button id="btnContractor" class="pill btn-pill">Contractor Dashboard</button>
-        <button id="btnReviews" class="pill btn-pill">Reviews</button>
-        <button id="btnAdmin" class="pill btn-pill admin-pill" style="display:none">Admin</button>
+      <div class="search-wrap">
+        <input id="searchInput" placeholder="Search services or contractors..." />
       </div>
 
-      <div class="sidebar-cats">
-        <h4>Categories</h4>
-        <div id="categoriesRoot" class="cats-root"></div>
+      <div class="categories" id="categoriesList">
+        <!-- categories injected here -->
       </div>
 
-      <div class="sidebar-bottom">
-        <button id="topContractorsBtn" class="btn">Top Contractors (Platinum)</button>
+      <div class="bottom-links">
+        <button id="adminBtn" class="admin-only">Admin</button>
+        <a href="/contractor.html" class="btn">Contractor Dashboard</a>
       </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
+    <!-- Main content -->
+    <main class="main">
       <header class="main-header">
         <div>
-          <h1>Find a service — we'll match you with verified contractors</h1>
-          <p class="muted">Select a category then pick a service. Chat to request a quote. Fast, trusted & local.</p>
+          <h2>Find a service</h2>
+          <p class="muted">Choose a category on the left or search — a chatbot will help you narrow down what you need.</p>
+        </div>
+        <div class="stats">
+          <div>Leads: <span id="siteLeadsCount">—</span></div>
+          <div>Contractors: <span id="siteContractorsCount">—</span></div>
         </div>
       </header>
 
-      <section class="card popular-card">
-        <h3>Popular Services</h3>
-        <div id="popularGrid" class="popular-grid"></div>
-      </section>
-
-      <section class="card top-contractors">
-        <h3>Top Contractors</h3>
-        <div id="topContractorsRow" class="top-rows"></div>
-      </section>
-
-      <section class="card testimonials">
-        <h3>Testimonials</h3>
-        <div id="testimonialsRow" class="test-row"></div>
-      </section>
-
-    </main>
-
-    <!-- CHAT WIDGET (floating) -->
-    <button id="chatToggle" class="chat-toggle">Chat</button>
-
-    <div id="chatModal" class="chat-modal" aria-hidden="true">
-      <div class="chat-card">
-        <div class="chat-header">
-          <div><strong>OmniChat</strong><div class="small-muted">We’ll help find the right service</div></div>
-          <button id="chatClose" class="chat-close">✕</button>
+      <section class="services-area">
+        <div class="services-grid" id="servicesGrid">
+          <!-- service cards -->
         </div>
 
-        <div id="chatBody" class="chat-body">
-          <!-- step-based chat form -->
-          <div id="chatStepService" class="chat-step">
-            <label class="label">Selected Service</label>
-            <div id="chosenService" class="mini-panel">None</div>
-
-            <label class="label">Top Contractors</label>
-            <div id="chatTop3" class="contractor-list-small"></div>
-
-            <button id="btnProceed" class="btn">Request this service</button>
+        <aside class="right-panel">
+          <div class="bubble-list" id="bubbleList">
+            <!-- bubbles (contractor highlights) -->
           </div>
 
-          <form id="leadForm" class="chat-step" style="display:none">
-            <label class="label">Full name</label>
-            <input name="name" class="input" required>
+          <div class="top-contractors card">
+            <h3>Top Contractors</h3>
+            <div id="topContractors"></div>
+          </div>
 
-            <label class="label">Phone</label>
-            <input name="phone" class="input" required>
-
-            <label class="label">Email (optional)</label>
-            <input name="email" class="input">
-
-            <label class="label">Address / Suburb</label>
-            <input name="address" class="input">
-
-            <label class="label">When</label>
-            <input name="when" class="input" placeholder="ASAP or date">
-
-            <label class="label">Details</label>
-            <textarea name="details" class="input textarea" placeholder="Describe the problem"></textarea>
-
-            <div style="display:flex;gap:8px;margin-top:12px">
-              <button type="submit" class="btn">Send Request</button>
-              <button type="button" id="btnBack" class="btn ghost">Back</button>
-            </div>
-          </form>
-
-          <div id="chatResult" class="chat-step" style="display:none"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- modal for showing service details (optional) -->
-    <div id="serviceModal" class="service-modal" aria-hidden="true">
-      <div class="service-card">
-        <div class="service-header">
-          <h3 id="serviceTitle"></h3>
-          <button id="closeServiceModal" class="close-btn">✕</button>
-        </div>
-        <div id="serviceContent"></div>
-      </div>
-    </div>
-
+          <div class="testimonials card" id="testimonials">
+            <h3>Client Reviews</h3>
+            <div id="reviewsCarousel"></div>
+          </div>
+        </aside>
+      </section>
+    </main>
   </div>
+
+  <!-- Chatbot / Lead modal -->
+  <div id="leadModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="leadModalTitle">Request Service</h3>
+        <button id="closeLeadModal">✕</button>
+      </div>
+      <form id="leadForm" class="modal-body">
+        <input name="service" id="leadService" readonly />
+        <input name="name" placeholder="Your full name" required />
+        <input name="phone" placeholder="Phone (e.g. +2771...)" required />
+        <input name="email" placeholder="Email (optional)" />
+        <textarea name="details" placeholder="Tell us what you need" required></textarea>
+        <div class="modal-actions">
+          <button type="submit" class="primary">Send Request</button>
+          <button type="button" id="leadCancel" class="ghost">Cancel</button>
+        </div>
+        <div id="leadResult" class="lead-result"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Floating admin small button (bottom-right), only visible if you're admin (client-side hide/show) -->
+  <button id="floatingAdmin" class="floating-admin hidden">Admin</button>
+
 </body>
 </html>
