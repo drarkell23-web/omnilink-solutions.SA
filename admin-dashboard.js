@@ -1,96 +1,164 @@
-// admin-dashboard.js — admin controls that use your server endpoints
+const supabase = supabase.createClient(
+    "https://obmbklanktevawuymkbq.supabase.co",
+    "YOUR_PUBLIC_ANON_KEY"
+);
 
-const contractorsTable = document.getElementById('contractorsTable');
-const refreshBtn = document.getElementById('refreshBtn');
-const badgeForm = document.getElementById('badgeForm');
-const badgeResult = document.getElementById('badgeResult');
-const loadLogsBtn = document.getElementById('loadLogsBtn');
-const logSelect = document.getElementById('logSelect');
-const logsArea = document.getElementById('logsArea');
-const leadLimitIn = document.getElementById('leadLimit');
-const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-
-async function api(path, opts={}) {
-  try {
-    const r = await fetch(path, opts);
-    if (!r.ok) throw new Error('api err');
-    return await r.json();
-  } catch (e) {
-    console.warn('api fail', e);
-    return null;
-  }
+function showPage(id){
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
 }
 
-async function loadContractors(){
-  contractorsTable.innerHTML = 'Loading...';
-  const res = await api('/api/contractors');
-  if (!res || !res.contractors) { contractorsTable.innerHTML = 'Failed to load contractors.'; return; }
-  contractorsTable.innerHTML = '';
-  res.contractors.forEach(c => {
-    const row = document.createElement('div'); row.className='contractor-row';
-    const left = document.createElement('div'); left.innerHTML = `<strong>${c.company||c.name||c.id}</strong><div class="muted">${c.category||''} • ${c.area||''}</div>`;
-    const right = document.createElement('div'); right.className='contractor-actions';
-    right.innerHTML = `<button class="ghost view" data-id="${c.id}">View</button><button class="ghost badge" data-id="${c.id}">Badge</button><button class="ghost del" data-id="${c.id}">Delete</button>`;
-    row.appendChild(left); row.appendChild(right);
-    contractorsTable.appendChild(row);
-  });
+/* LOAD DATA */
+async function loadDashboard(){
+    const contractors = await (await fetch("/api/contractors")).json();
+    const services = await (await fetch("/api/services")).json();
+    const leads = await (await fetch("/api/logs/leads")).json();
+    const reviews = await (await fetch("/api/logs/reviews")).json();
 
-  // attach listeners
-  document.querySelectorAll('.contractor-actions .view, .contractor-row .view').forEach(btn=>{
-    btn.addEventListener('click', ()=> {
-      const id = btn.dataset.id;
-      window.open(`/c/${id}`, '_blank');
-    });
-  });
-  document.querySelectorAll('.contractor-row .badge').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const id = btn.dataset.id;
-      const badge = prompt('Badge (platinum, gold, verified):','platinum');
-      const secret = prompt('Admin secret:');
-      if (!badge || !secret) return alert('Cancelled');
-      applyBadge(id, badge, secret);
-    });
-  });
-  document.querySelectorAll('.contractor-row .del').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const id = btn.dataset.id;
-      if (!confirm('Delete contractor? This removes from JSON or Supabase (if enabled).')) return;
-      // call /api/contractor with deletion flag (server currently does not implement delete; so we will append to contractors log)
-      const res = await api('/api/apply-badge', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ adminSecret: prompt('Admin secret:'), contractorId: id, badge: 'deleted' }) });
-      if (res && res.ok) { alert('Marked as deleted (badge applied)'); loadContractors(); }
-    });
-  });
+    document.getElementById("countContractors").textContent = contractors.contractors.length;
+    document.getElementById("countLeads").textContent = leads.length;
+    document.getElementById("countReviews").textContent = reviews.length;
+
+    renderContractors(contractors.contractors);
+    renderTop(contractors.contractors);
+    renderLeads(leads);
+    renderReviews(reviews);
 }
 
-async function applyBadge(contractorId, badge, adminSecret){
-  badgeResult.textContent = 'Applying...';
-  const res = await api('/api/apply-badge', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ adminSecret, contractorId, badge }) });
-  if (!res) { badgeResult.textContent = 'Failed'; return; }
-  if (res.ok) { badgeResult.textContent = `Badge ${badge} applied to ${res.contractor && (res.contractor.company||res.contractor.name||res.contractor.id)}`; loadContractors(); }
-  else badgeResult.textContent = `Error: ${res.error||'unknown'}`;
+function renderTop(contractors){
+    const cont = contractors
+        .filter(c=>c.badge==="platinum" || c.badge==="diamond")
+        .slice(0,3);
+
+    let html = "";
+    for (let c of cont){
+        html += `
+            <div class="top-card">
+                <img src="${c.logo_url || '/assets/default-logo.png'}">
+                <div>${c.name || 'Unknown'}</div>
+                <div class="badge">${c.badge}</div>
+            </div>
+        `;
+    }
+    document.getElementById("topContractors").innerHTML = html;
 }
 
-badgeForm.addEventListener('submit', (e)=>{
-  e.preventDefault();
-  const f = new FormData(badgeForm);
-  const contractorId = f.get('contractorId');
-  const badge = f.get('badge');
-  const adminSecret = f.get('adminSecret');
-  applyBadge(contractorId,badge,adminSecret);
-});
+function renderContractors(list){
+    let html = "";
+    for(let c of list){
+        html += `
+            <div class="contractor-row">
+                <img src="${c.logo_url || '/assets/default-logo.png'}">
+                <div class="info">
+                    <b>${c.name || "No Name"}</b>
+                    <div>${c.category || "No category"}</div>
+                    <div>Plan: ${c.subscription || "None"}</div>
+                    <div>Badge: ${c.badge || "None"}</div>
+                </div>
 
-loadLogsBtn.addEventListener('click', async ()=>{
-  const name = logSelect.value;
-  logsArea.innerHTML = 'Loading...';
-  const res = await api(`/api/logs/${name}`);
-  if (!res) { logsArea.innerHTML = 'Failed to load logs.'; return; }
-  logsArea.innerHTML = '<pre>' + JSON.stringify(res.slice(0,200), null, 2) + '</pre>';
-});
+                <button onclick="editContractor('${c.id}')">Edit</button>
+            </div>
+        `;
+    }
+    document.getElementById("contractorList").innerHTML = html;
+}
 
-refreshBtn.addEventListener('click', loadContractors);
+function renderLeads(list){
+    let html = "";
+    for (let l of list){
+        html += `
+            <div class="lead-item">
+                <b>${l.name}</b> — ${l.phone}<br>
+                Service: ${l.service || "None"}<br>
+                <small>${l.ts}</small>
+            </div>
+        `;
+    }
+    document.getElementById("leadList").innerHTML = html;
+}
 
-saveSettingsBtn.addEventListener('click', ()=>{
-  alert('Settings saved locally (demo). To make persistent, implement /api/admin/settings on the server.');
-});
+function renderReviews(list){
+    let html = "";
+    for (let r of list){
+        html += `
+            <div class="review-item">
+                <b>${r.name}</b> ⭐ ${r.rating}<br>
+                <div>${r.comment}</div>
+            </div>
+        `;
+    }
+    document.getElementById("reviewList").innerHTML = html;
+}
 
-loadContractors();
+async function applyBadge(){
+    const id = document.getElementById("badgeContractor").value;
+    const badge = document.getElementById("badgeType").value;
+
+    await fetch("/api/apply-badge", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+            adminSecret: "omni$admin_2025_KEY!@34265346597843152",
+            contractorId: id,
+            badge
+        })
+    });
+
+    alert("Badge applied!");
+}
+
+/* Subscription + Account Control */
+async function applySubscription(){
+    const id = document.getElementById("subContractor").value;
+    const plan = document.getElementById("subPlan").value;
+
+    await fetch("/api/contractor", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ id, subscription:plan })
+    });
+
+    alert("Subscription updated!");
+}
+
+async function deleteAccount(){
+    alert("Deleting coming in next version");
+}
+
+async function deactivateAccount(){
+    alert("Deactivate coming next update.");
+}
+
+async function activateAccount(){
+    alert("Activate coming next update.");
+}
+
+/* Theme control */
+function applyGlobalTheme(){
+    const c = document.getElementById("globalThemeColor").value;
+    document.body.style.setProperty("--accent", c);
+}
+
+/* Telegram Admin Host */
+async function saveAdminTelegram(){
+    const token = document.getElementById("adminBotToken").value;
+    const chat = document.getElementById("adminChatId").value;
+
+    await fetch("/api/contractor", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+            id:"ADMIN",
+            telegramToken:token,
+            telegramChatId:chat
+        })
+    });
+
+    alert("Telegram host saved!");
+}
+
+function logout(){
+    window.location.href = "/";
+}
+
+loadDashboard();
