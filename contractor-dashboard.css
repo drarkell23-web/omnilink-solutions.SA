@@ -1,0 +1,23 @@
+/* contractor-dashboard.css - small supplementary styling */
+
+:root{
+  --accent-from: #7b61ff;
+  --accent-to: #42b3ff;
+  --accent-text: #0b0b0f;
+}
+
+/* smooth scrollbar */
+::-webkit-scrollbar { width: 8px; height:8px }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg,var(--accent-from),var(--accent-to)); border-radius:8px }
+
+/* subtle focus outlines */
+input:focus, textarea:focus, button:focus { outline: 2px solid rgba(123,97,255,0.15); outline-offset: 2px; }
+
+/* contractor logo placeholder */
+#companyLogo { display:flex; align-items:center; justify-content:center; color:white; font-weight:700; }
+
+/* message bubble styling in messageList */
+.msg-bubble { background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); }
+.msg-bubble.admin { background: linear-gradient(90deg,var(--accent-from),var(--accent-to)); color:black; font-weight:600; }
+
+.reviewer-thumb { width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,0.04) }
