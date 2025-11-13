@@ -7,7 +7,6 @@
 </head>
 <body>
 <div style="display:flex;min-height:100vh">
-  <!-- SIDE PANEL -->
   <aside style="width:320px;padding:18px" class="card">
     <div style="display:flex;gap:12px;align-items:center">
       <img id="logoPreview" src="/assets/default-logo.png" alt="logo" style="width:64px;height:64px;border-radius:8px;object-fit:cover;background:#111">
@@ -31,10 +30,8 @@
     </div>
   </aside>
 
-  <!-- MAIN AREA -->
   <main style="flex:1;padding:18px">
     <div id="panelArea" class="card">
-      <!-- dynamic content loads here -->
       <h2>Welcome to your dashboard</h2>
       <div class="small">Use the left menu to manage profile, messages, reviews, and billing.</div>
     </div>
@@ -42,10 +39,8 @@
 </div>
 
 <script type="module">
-// client-side controller for contractor dashboard panels
-async function fetchContractors() {
-  const r = await fetch('/api/contractors'); const j = await r.json(); return j.contractors || [];
-}
+import { fetchContractors } from './Firebase-bridge.js';
+
 let contractors = await fetchContractors();
 let currentContractor = contractors[0] || null;
 
@@ -114,7 +109,6 @@ function renderMessagesPanel() {
 function renderReviewsPanel() {
   const p = document.getElementById('panelArea');
   p.innerHTML = `<h3>Reviews</h3><div id="reviewsList">Loading...</div>`;
-  // fetch reviews and filter by contractor
   (async()=>{
     const r = await fetch('/api/logs/reviews'); const arr = await r.json();
     const filtered = arr.filter(rv => rv.contractor === currentContractor?.company || rv.contractor === currentContractor?.id);
@@ -125,7 +119,6 @@ function renderReviewsPanel() {
 function renderAnalyticsPanel() {
   const p = document.getElementById('panelArea');
   p.innerHTML = `<h3>Analytics</h3><div id="chart" style="min-height:200px">Graph placeholder — leads: <span id="leadCount">0</span></div>`;
-  // simple stat
   (async()=>{
     const r = await fetch('/api/logs/leads'); const leads = await r.json();
     const count = leads.filter(l => l.contractorId === currentContractor?.id || l.contractorId === currentContractor?.phone).length;
@@ -146,11 +139,10 @@ document.getElementById('analyticsBtn').addEventListener('click', renderAnalytic
 document.getElementById('billingBtn').addEventListener('click', renderBillingPanel);
 document.getElementById('settingsBtn').addEventListener('click', ()=> {
   const p = document.getElementById('panelArea');
-  p.innerHTML = `<h3>Settings</h3><div class="small">Telegram token and chat ID saved in profile. To receive leads, set token & chat id in profile.</div>`;
+  p.innerHTML = `<h3>Settings</h3><div class="small">Telegram token and chat ID are saved in profile. To receive leads, set token & chat id in profile.</div>`;
 });
 document.getElementById('logoutBtn').addEventListener('click', ()=> { sessionStorage.removeItem('CONTRACTOR_ID'); window.location.href = '/'; });
 
-// initial render
 if (currentContractor) {
   document.getElementById('companyDisplay').textContent = currentContractor.company || currentContractor.name || 'Contractor';
   document.getElementById('contractorId').textContent = currentContractor.id || currentContractor.phone || '--';
