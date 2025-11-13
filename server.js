@@ -1,4 +1,276 @@
 /**
+ * server.js — FULL VERSION
+ * Supabase + Telegram + JSON fallback + Uploads + Admin
+ */
+
+import express from "express";
+import path from "path";
+import fs from "fs";
+import multer from "multer";
+import fetch from "node-fetch";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+import { createClient } from "@supabase/supabase-js";
+
+dotenv.config();
+
+// --------------------------------------------------
+// Path setup
+// --------------------------------------------------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PORT = process.env.PORT || 10000;
+
+// --------------------------------------------------
+// Environment variables
+// --------------------------------------------------
+const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || "";
+const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+  : null;
+
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
+const ADMIN_SECRET = process.env.ADMIN_SECRET;
+
+// --------------------------------------------------
+// Local fallback storage
+// --------------------------------------------------
+const DATA_DIR = path.join(__dirname, "data");
+const UPLOADS_DIR = path.join(__dirname, "uploads");
+for (const d of [DATA_DIR, UPLOADS_DIR]) {
+  if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+}
+
+function readJSON(name) {
+  const f = path.join(DATA_DIR, name + ".json");
+  if (!fs.existsSync(f)) return [];
+  try {
+    return JSON.parse(fs.readFileSync(f, "utf8"));
+  } catch (e) {
+    console.error("readJSON error:", e);
+    return [];
+  }
+}
+
+function writeJSON(name, data) {
+  const f = path.join(DATA_DIR, name + ".json");
+  fs.writeFileSync(f, JSON.stringify(data, null, 2));
+}
+
+// --------------------------------------------------
+// File Uploads (multer)
+// --------------------------------------------------
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_, __, cb) => cb(null, UPLOADS_DIR),
+    filename: (_, file, cb) =>
+      cb(null,
+        `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${file.originalname.replace(/\s+/g, '_')}`
+      )
+  }),
+  limits: { fileSize: 12 * 1024 * 1024 }
+});
+
+// --------------------------------------------------
+// Telegram
+// --------------------------------------------------
+async function sendTelegram(token, chatId, text) {
+  if (!token || !chatId) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: String(chatId), text, parse_mode: "HTML" })
+    });
+  } catch (err) {
+    console.error("Telegram error:", err);
+  }
+}
+
+// --------------------------------------------------
+// Express Setup
+// --------------------------------------------------
+const app = express();
+app.use(express.json({ limit: "12mb" }));
+app.use(express.static(__dirname));
+app.use("/uploads", express.static(UPLOADS_DIR));
+
+// --------------------------------------------------
+// SERVICES (GET)
+// --------------------------------------------------
+app.get("/api/services", async (req, res) => {
+  try {
+    if (supabase) {
+      const { data, error } = await supabase.from("services").select("*");
+      if (!error) return res.json({ ok: true, services: data });
+    }
+  } catch (e) {}
+
+  return res.json({ ok: true, services: readJSON("services") });
+});
+
+// --------------------------------------------------
+// CONTRACTOR UPSERT
+// --------------------------------------------------
+app.post("/api/contractor", async (req, res) => {
+  const c = req.body;
+
+  try {
+    if (supabase) {
+      const { error } = await supabase.from("contractors").upsert(c);
+      if (!error) return res.json({ ok: true });
+    }
+  } catch (e) {}
+
+  // fallback JSON
+  const arr = readJSON("contractors");
+  const idx = arr.findIndex(x => x.id === c.id || x.phone === c.phone);
+  idx > -1 ? arr[idx] = c : arr.unshift(c);
+  writeJSON("contractors", arr);
+
+  res.json({ ok: true });
+});
+
+// --------------------------------------------------
+// LEAD SUBMISSION
+// --------------------------------------------------
+app.post("/api/lead", async (req, res) => {
+  const lead = req.body;
+
+  try {
+    if (supabase) {
+      await supabase.from("leads").insert(lead);
+    }
+  } catch (e) {}
+
+  // fallback log
+  const arr = readJSON("leads");
+  arr.unshift(lead);
+  writeJSON("leads", arr);
+
+  // Notify admin
+  await sendTelegram(
+    BOT_TOKEN,
+    ADMIN_CHAT_ID,
+    `<b>📩 New Lead</b>
+Name: ${lead.name}
+Phone: ${lead.phone}
+Email: ${lead.email || "-"}
+Service: ${lead.service || ""}
+Message: ${lead.message || "-"}`
+  );
+
+  // Notify contractor
+  if (lead.contractorId) {
+    const contractors = readJSON("contractors");
+    const c = contractors.find(x => x.id === lead.contractorId);
+    if (c?.telegramToken && c?.telegramChatId) {
+      await sendTelegram(
+        c.telegramToken,
+        c.telegramChatId,
+        `<b>New Lead for You</b>\n${lead.name} - ${lead.phone}`
+      );
+    }
+  }
+
+  res.json({ ok: true });
+});
+
+// --------------------------------------------------
+// REVIEW UPLOAD
+// --------------------------------------------------
+app.post("/api/review", upload.array("images", 8), async (req, res) => {
+  const review = {
+    contractor: req.body.contractor,
+    name: req.body.name,
+    rating: Number(req.body.rating || 0),
+    comment: req.body.comment,
+    images: req.files.map(f => `/uploads/${path.basename(f.path)}`)
+  };
+
+  try {
+    if (supabase) {
+      await supabase.from("reviews").insert(review);
+      return res.json({ ok: true });
+    }
+  } catch (e) {}
+
+  const arr = readJSON("reviews");
+  arr.unshift(review);
+  writeJSON("reviews", arr);
+
+  res.json({ ok: true });
+});
+
+// --------------------------------------------------
+// MESSAGE (contractor -> admin)
+// --------------------------------------------------
+app.post("/api/message", async (req, res) => {
+  const m = req.body;
+
+  try {
+    if (supabase) {
+      await supabase.from("messages").insert(m);
+    }
+  } catch (e) {}
+
+  await sendTelegram(
+    BOT_TOKEN,
+    ADMIN_CHAT_ID,
+    `<b>Message from Contractor</b>\nID: ${m.contractorId}\n${m.message}`
+  );
+
+  res.json({ ok: true });
+});
+
+// --------------------------------------------------
+// APPLY BADGE (Admin Protected)
+// --------------------------------------------------
+app.post("/api/apply-badge", async (req, res) => {
+  const { adminSecret, contractorId, badge } = req.body;
+
+  if (adminSecret !== ADMIN_SECRET)
+    return res.status(401).json({ ok: false, error: "Unauthorized" });
+
+  try {
+    if (supabase) {
+      await supabase
+        .from("contractors")
+        .update({ badge })
+        .eq("id", contractorId);
+      return res.json({ ok: true });
+    }
+  } catch (e) {}
+
+  const arr = readJSON("contractors");
+  const idx = arr.findIndex(c => c.id === contractorId);
+  if (idx > -1) {
+    arr[idx].badge = badge;
+    writeJSON("contractors", arr);
+  }
+
+  res.json({ ok: true });
+});
+
+// --------------------------------------------------
+// LOGS
+// --------------------------------------------------
+app.get("/api/logs/:name", (req, res) => {
+  res.json(readJSON(req.params.name));
+});
+
+// --------------------------------------------------
+// FALLBACK 404
+// --------------------------------------------------
+app.use((req, res) => res.status(404).send("Not Found"));
+
+// --------------------------------------------------
+// START SERVER
+// --------------------------------------------------
+app.listen(PORT, () => console.log(`🚀 Server running on ${PORT}`));
+/**
  * server.js - Restored & upgraded main server with Supabase integration
  *
  * - Writes to Supabase (leads, contractors, reviews) if available
@@ -419,3 +691,4 @@ app.use((req,res)=>{
 
 /* listen */
 app.listen(PORT, ()=>console.log(`🚀 Server running on port ${PORT}`));
+
