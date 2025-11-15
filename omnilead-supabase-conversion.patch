@@ -1,0 +1,576 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: ChatGPT <noreply@example.com>
+Date: Fri, 15 Nov 2025 12:55:00 +0200
+Subject: [PATCH] Supabase Conversion - Base Files
+
+---
+diff --git a/public/js/supabaseClient.js b/public/js/supabaseClient.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/public/js/supabaseClient.js
+@@ -0,0 +1,12 @@
++import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
++
++// TODO: replace these with your Supabase details
++export const SUPABASE_URL = 'https://SUPABASE_URL'
++export const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY'
++
++export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
++
+
+diff --git a/public/js/auth.js b/public/js/auth.js
+new file mode 100644
+index 0000000..2222222
+--- /dev/null
++++ b/public/js/auth.js
+@@ -0,0 +1,70 @@
++import { supabase } from './supabaseClient.js'
++
++const email = document.getElementById('email')
++const password = document.getElementById('password')
++const btnLogin = document.getElementById('btn-login')
++const btnRegister = document.getElementById('btn-register')
++const authMsg = document.getElementById('auth-msg')
++const goContractor = document.getElementById('go-contractor')
++const goAdmin = document.getElementById('go-admin')
++
++btnLogin?.addEventListener('click', async ()=>{
++  authMsg.textContent = 'Signing in...'
++  const { error, data } = await supabase.auth.signInWithPassword({
++    email: email.value,
++    password: password.value
++  })
++  if (error) {
++    authMsg.textContent = error.message
++    return
++  }
++
++  const { data: profile } = await supabase
++    .from('profiles')
++    .select('role')
++    .eq('id', data.user.id)
++    .single()
++
++  const role = profile?.role || 'contractor'
++
++  authMsg.textContent = 'Signed in'
++
++  if (role === 'admin') location.href = '/admin/admin.html'
++  else location.href = '/contractor/dashboard.html'
++})
++
++btnRegister?.addEventListener('click', async ()=>{
++  authMsg.textContent = 'Registering...'
++
++  const { data, error } = await supabase.auth.signUp({
++    email: email.value,
++    password: password.value
++  })
++
++  if (error) {
++    authMsg.textContent = error.message
++    return
++  }
++
++  await supabase.from('profiles').insert([
++    {
++      id: data.user.id,
++      email: email.value,
++      role: 'contractor'
++    }
++  ])
++
++  authMsg.textContent = 'Registration success — confirm email.'
++})
++
++goContractor?.addEventListener('click', ()=>{
++  location.href = '/contractor/dashboard.html'
++})
++
++goAdmin?.addEventListener('click', ()=>{
++  location.href = '/admin/admin.html'
++})
+
+diff --git a/public/contractor/dashboard.html b/public/contractor/dashboard.html
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/public/contractor/dashboard.html
+@@ -0,0 +1,125 @@
++<!doctype html>
++<html lang="en">
++<head>
++  <meta charset="utf-8" />
++  <meta name="viewport" content="width=device-width,initial-scale=1" />
++  <title>Contractor Dashboard</title>
++  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Contractor Dashboard</h1>
+    <nav>
+      <a href="/login.html">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="profile">
+      <h2>Profile Settings</h2>
+      <label>Company Name <input id="company_name" /></label>
+      <label>Contact Name <input id="contact_name" /></label>
+      <label>Phone <input id="phone" /></label>
+      <label>Main Service <input id="main_service" /></label>
+      <button id="btn-save-profile">Save Profile</button>
+    </section>
+
+    <section id="chatbot">
+      <h2>Chatbot Credentials</h2>
+      <label>Chatbot ID <input id="chatbot_id" /></label>
+      <label>Chatbot Token <input id="chatbot_token" /></label>
+      <button id="save-chatbot">Save Chatbot</button>
+    </section>
+
+    <section id="leads">
+      <h2>Leads Inbox</h2>
+      <div id="leads-list">Loading...</div>
+
+      <h3>Reply to Lead</h3>
+      <select id="lead-select"></select>
+      <input id="message-text" placeholder="Type message..." />
+      <button id="btn-send-message">Send</button>
+    </section>
+  </main>
+
+  <script type="module" src="/js/supabaseClient.js"></script>
+  <script type="module" src="/js/contractor.js"></script>
+</body>
+</html>
+
+diff --git a/public/js/contractor.js b/public/js/contractor.js
+new file mode 100644
+index 0000000..4444444
+--- /dev/null
++++ b/public/js/contractor.js
+@@ -0,0 +1,220 @@
++import { supabase } from './supabaseClient.js'
++
++async function ensureAuthRedirect(){
++  const { data } = await supabase.auth.getUser()
++  if (!data.user){
++    location.href = '/login.html'
++    return null
++  }
++  return data.user
++}
++
++async function loadProfile(){
++  const user = await ensureAuthRedirect(); if(!user) return
++
++  const { data: profile } = await supabase
++    .from('profiles')
++    .select('*')
++    .eq('id', user.id)
++    .single()
++
++  document.getElementById('company_name').value = profile?.company_name || ''
++  document.getElementById('contact_name').value = profile?.contact_name || ''
++  document.getElementById('phone').value = profile?.phone || ''
++  document.getElementById('main_service').value = profile?.main_service || ''
++  document.getElementById('chatbot_id').value = profile?.chatbot_id || ''
++  document.getElementById('chatbot_token').value = profile?.chatbot_token || ''
++}
++
++async function saveProfile(){
++  const user = await ensureAuthRedirect(); if(!user) return
++
++  await supabase.from('profiles').upsert({
++    id: user.id,
++    company_name: document.getElementById('company_name').value,
++    contact_name: document.getElementById('contact_name').value,
++    phone: document.getElementById('phone').value,
++    main_service: document.getElementById('main_service').value
++  })
++
++  alert('Profile saved!')
++}
++
++async function saveChatbot(){
++  const user = await ensureAuthRedirect(); if(!user) return
++
++  await supabase.from('profiles').upsert({
++    id: user.id,
++    chatbot_id: document.getElementById('chatbot_id').value,
++    chatbot_token: document.getElementById('chatbot_token').value
++  })
++
++  alert('Chatbot credentials saved!')
++}
++
++async function loadLeads(){
++  const user = await ensureAuthRedirect(); if(!user) return
++
++  const { data: leads } = await supabase
++    .from('leads')
++    .select('*')
++    .eq('contractor_id', user.id)
++    .order('created_at', { ascending: false })
++
++  const list = document.getElementById('leads-list')
++  const select = document.getElementById('lead-select')
++
++  list.innerHTML = ''
++  select.innerHTML = ''
++
++  if (!leads?.length){
++    list.innerHTML = '<p>No leads yet</p>'
++    return
++  }
++
++  leads.forEach(l=>{
++    const div = document.createElement('div')
++    div.className = 'lead-item'
++    div.innerHTML = `
++      <strong>${l.name || l.email || l.phone}</strong>
++      <div>${l.message || ''}</div>
++      <small>${new Date(l.created_at).toLocaleString()}</small>
++    `
++    list.appendChild(div)
++
++    const opt = document.createElement('option')
++    opt.value = l.id
++    opt.textContent = l.name || l.email || l.phone
++    select.appendChild(opt)
++  })
++}
++
++async function sendMessage(){
++  const user = await ensureAuthRedirect(); if(!user) return
++
++  const leadId = document.getElementById('lead-select').value
++  const text = document.getElementById('message-text').value
++
++  if (!leadId || !text){
++    return alert('Select lead and type message.')
++  }
++
++  await supabase.from('messages').insert([
++    {
++      lead_id: leadId,
++      contractor_id: user.id,
++      text
++    }
++  ])
++
++  alert('Message sent!')
++}
++
++document.getElementById('btn-save-profile')
++  .addEventListener('click', saveProfile)
++
++document.getElementById('save-chatbot')
++  .addEventListener('click', saveChatbot)
++
++document.getElementById('btn-send-message')
++  .addEventListener('click', sendMessage)
++
++loadProfile()
++loadLeads()
+diff --git a/public/admin/admin.html b/public/admin/admin.html
+new file mode 100644
+index 0000000..5555555
+--- /dev/null
++++ b/public/admin/admin.html
+@@ -0,0 +1,110 @@
++<!doctype html>
++<html lang="en">
++<head>
++  <meta charset="utf-8" />
++  <meta name="viewport" content="width=device-width,initial-scale=1" />
++  <title>Admin Dashboard</title>
++  <link rel="stylesheet" href="/styles.css" />
++</head>
++<body>
++  <header>
++    <h1>Admin Dashboard</h1>
++    <nav>
++      <a href="/login.html">Logout</a>
++    </nav>
++  </header>
++
++  <main>
++    <section id="contractors">
++      <h2>All Contractors</h2>
++      <button id="btn-refresh-contractors">Refresh</button>
++      <div id="contractors-list">Loading contractors...</div>
++    </section>
++
++    <section id="leads">
++      <h2>All Leads</h2>
++      <div id="all-leads-list">Loading leads...</div>
++    </section>
++  </main>
++
++  <script type="module" src="/js/supabaseClient.js"></script>
++  <script type="module" src="/js/admin.js"></script>
++</body>
++</html>
+
+diff --git a/public/js/admin.js b/public/js/admin.js
+new file mode 100644
+index 0000000..6666666
+--- /dev/null
++++ b/public/js/admin.js
+@@ -0,0 +1,240 @@
++import { supabase } from './supabaseClient.js'
++
++async function ensureAuthRedirect(){
++  const { data } = await supabase.auth.getUser()
++  if (!data.user){
++    location.href = '/login.html'
++    return null
++  }
++
++  const { data: profile } = await supabase
++    .from('profiles')
++    .select('role')
++    .eq('id', data.user.id)
++    .single()
++
++  if (profile?.role !== 'admin'){
++    alert('Not authorized.')
++    location.href = '/login.html'
++    return null
++  }
++
++  return data.user
++}
++
++async function loadContractors(){
++  await ensureAuthRedirect()
++
++  const { data: contractors } = await supabase
++    .from('profiles')
++    .select('*')
++    .neq('role','admin')
++
++  const list = document.getElementById('contractors-list')
++  list.innerHTML = ''
++
++  if (!contractors || contractors.length === 0){
++    list.innerHTML = '<p>No contractors found.</p>'
++    return
++  }
++
++  contractors.forEach(c=>{
++    const div = document.createElement('div')
++    div.className = 'lead-item'
++
++    div.innerHTML = `
++      <strong>${c.company_name || c.contact_name || c.email}</strong>
++      <div>Service: ${c.main_service || 'None'}</div>
++      <div>Chatbot: ${c.chatbot_id ? '✓ Connected' : 'Not Connected'}</div>
++    `
++
++    list.appendChild(div)
++  })
++}
++
++async function loadAllLeads(){
++  await ensureAuthRedirect()
++
++  const { data: leads } = await supabase
++    .from('leads')
++    .select('*, profiles:profiles(id,company_name,contact_name)')
++    .order('created_at',{ascending:false})
++
++  const list = document.getElementById('all-leads-list')
++  list.innerHTML = ''
++
++  if (!leads || leads.length === 0){
++    list.innerHTML = '<p>No leads found.</p>'
++    return
++  }
++
++  leads.forEach(l=>{
++    const div = document.createElement('div')
++    div.className = 'lead-item'
++
++    const contractorName =
++      l.profiles?.company_name ||
++      l.profiles?.contact_name ||
++      'Unknown Contractor'
++
++    div.innerHTML = `
++      <strong>${l.name || l.email || l.phone}</strong>
++      <div>${l.message}</div>
++      <small>Assigned to: ${contractorName}</small>
++    `
++
++    list.appendChild(div)
++  })
++}
++
++document.getElementById('btn-refresh-contractors')
++  .addEventListener('click', loadContractors)
++
++loadContractors()
++loadAllLeads()
++
++// Realtime updates
++supabase.channel('public:leads')
++  .on(
++    'postgres_changes',
++    { event: 'INSERT', schema: 'public', table: 'leads' },
++    payload=>{
++      console.log('New lead received', payload)
++      loadAllLeads()
++      loadContractors()
++    }
++  )
++  .subscribe()
+diff --git a/public/styles.css b/public/styles.css
+new file mode 100644
+index 0000000..7777777
+--- /dev/null
++++ b/public/styles.css
+@@ -0,0 +1,120 @@
++:root{
+  --accent: #007bff;
+  --bg: #ffffff;
+  --border: #e5e5e5;
+  --text: #222;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+h1, h2, h3 {
+  font-weight: 600;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+button {
+  padding: 8px 14px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+input, select {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  width: 100%;
+  margin: 6px 0;
+}
+
+section {
+  margin-bottom: 25px;
+}
+
+#leads-list, #contractors-list, #all-leads-list {
+  border: 1px solid var(--border);
+  padding: 12px;
+  border-radius: 6px;
+  min-height: 60px;
+}
+
+.lead-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.lead-item:last-child {
+  border-bottom: none;
+}
+diff --git a/sql/supabase_schema.sql b/sql/supabase_schema.sql
+new file mode 100644
+index 0000000..8888888
+--- /dev/null
++++ b/sql/supabase_schema.sql
+@@ -0,0 +1,150 @@
+-- SUPABASE DATABASE SCHEMA FOR OMNILEAD
+-- RUN THIS ENTIRE FILE IN SUPABASE SQL EDITOR
+
+-------------------------------------------------------
+-- PROFILES TABLE
+-------------------------------------------------------
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  role text default 'contractor',
+  company_name text,
+  contact_name text,
+  phone text,
+  main_service text,
+  chatbot_id text,
+  chatbot_token text,
+  created_at timestamptz default now()
+);
+
+-------------------------------------------------------
+-- LEADS TABLE
+-------------------------------------------------------
+create table if not exists public.leads (
+  id uuid primary key default gen_random_uuid(),
+  contractor_id uuid references public.profiles(id) on delete set null,
+  name text,
+  email text,
+  phone text,
+  message text,
+  created_at timestamptz default now()
+);
+
+-------------------------------------------------------
+-- MESSAGES TABLE (Contractor replies)
+-------------------------------------------------------
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  lead_id uuid references public.leads(id) on delete cascade,
+  contractor_id uuid references public.profiles(id) on delete set null,
+  text text,
+  created_at timestamptz default now()
+);
+
+-------------------------------------------------------
+-- ADMIN NOTIFICATIONS
+-------------------------------------------------------
+create table if not exists public.admin_notifications (
+  id uuid primary key default gen_random_uuid(),
+  contractor_id uuid references public.profiles(id) on delete set null,
+  lead_id uuid references public.leads(id) on delete set null,
+  text text,
+  created_at timestamptz default now()
+);
+
+-------------------------------------------------------
+-- REALTIME ENABLE
+-------------------------------------------------------
+alter publication supabase_realtime add table public.leads;
+alter publication supabase_realtime add table public.messages;
+alter publication supabase_realtime add table public.admin_notifications;
+-- 
+2.25.1
