@@ -1,0 +1,228 @@
+<!-- Updated Contractor Dashboard with unified Service Point Solutions branding -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Contractor Dashboard — Service Point Solutions</title>
+<link rel="stylesheet" href="/dashboard.css" />
+<link rel="stylesheet" href="/theme.css" />
+<style>
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, Arial;
+  }
+  header {
+    background: var(--panel);
+    padding: 16px;
+    border-bottom: 1px solid #222533;
+  }
+  header .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  #layout {
+    max-width: 1200px;
+    margin: 24px auto;
+    padding: 0 16px;
+    display: flex;
+    gap: 24px;
+  }
+
+  /* Sidebar */
+  #sidebar {
+    width: 260px;
+    background: var(--panel);
+    padding: 20px;
+    border-radius: 12px;
+    height: fit-content;
+  }
+  #sidebar .logo {
+    width: 64px;
+    margin-bottom: 10px;
+  }
+  #sidebar h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 20px;
+  }
+  .side-btn {
+    width: 100%;
+    background: var(--card);
+    border: 0;
+    padding: 12px;
+    text-align: left;
+    color: var(--text);
+    margin-bottom: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+  }
+  .side-btn.active {
+    background: linear-gradient(90deg, var(--accent-from), var(--accent-to));
+    color: #000;
+    font-weight: 700;
+  }
+  #logout {
+    background: #8a0a0a;
+    margin-top: 18px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 700;
+    border: 0;
+    cursor: pointer;
+  }
+
+  /* Content */
+  #content {
+    flex: 1;
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  h1 {
+    margin-top: 0;
+  }
+
+  .card-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .card {
+    background: var(--card);
+    padding: 20px;
+    flex: 1;
+    border-radius: 12px;
+    min-width: 200px;
+  }
+
+  .premium-card {
+    background: #2a2036;
+    border: 1px solid #5b3c9d;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="wrap">
+    <img src="/assets/logo-128.png" class="logo" />
+
+    <div style="display:flex; flex-direction:column;">
+      <h1 style="margin:0;">Service Point Solutions</h1>
+      <!-- tagline intentionally omitted per your Option 2 decision -->
+    </div>
+  </div>
+</header>
+
+<div id="layout">
+  <div id="sidebar">
+      <img src="/assets/logo-128.png" class="logo" />
+      <h2 style="margin-bottom:6px;">Service Point Solutions</h2>
+      <p style="font-size:12px; margin-top:0; margin-bottom:20px; color:var(--muted);">
+        <!-- small supporting text left blank so it won't overwhelm layout -->
+      </p>
+
+      <button class="side-btn active" data-page="overview">📊 Overview</button>
+      <button class="side-btn" data-page="profile">👤 Profile</button>
+      <button class="side-btn" data-page="leads">📥 Leads</button>
+      <button class="side-btn" data-page="reviews">⭐ Reviews</button>
+      <button class="side-btn" data-page="ads">📣 Create Ad</button>
+      <button class="side-btn premium-lock" data-page="analytics">📈 Analytics</button>
+      <button class="side-btn premium-lock" data-page="theme">🎨 Theme</button>
+      <button class="side-btn" data-page="subscription">💳 Subscription</button>
+      <button class="side-btn" data-page="public">🌐 Public Page</button>
+
+      <button id="logout">🚪 Logout</button>
+  </div>
+
+  <div id="content">
+
+      <section id="overview" class="page active">
+          <h1>Welcome back!</h1>
+          <div class="card-row">
+              <div class="card"><h3>New Leads</h3><p id="lead-count">0</p></div>
+              <div class="card"><h3>Reviews</h3><p id="review-count">0</p></div>
+              <div class="card premium-card"><h3>Profile Views</h3><p>🔒</p></div>
+          </div>
+      </section>
+
+      <section id="profile" class="page">
+        <h1>Profile Settings</h1>
+        <div id="profile-area">Loading...</div>
+      </section>
+
+      <section id="leads" class="page">
+        <h1>Leads</h1>
+        <div id="lead-list">Loading...</div>
+      </section>
+
+      <section id="reviews" class="page">
+        <h1>Reviews</h1>
+        <div id="review-list">Loading...</div>
+      </section>
+
+      <section id="ads" class="page">
+        <h1>Create Ad</h1>
+        <div id="ad-box">Coming soon...</div>
+      </section>
+
+      <section id="analytics" class="page premium-lock">
+        <h1>Analytics</h1>
+        <p>Premium Only</p>
+      </section>
+
+      <section id="theme" class="page premium-lock">
+        <h1>Theme Settings</h1>
+      </section>
+
+      <section id="subscription" class="page">
+        <h1>Subscription Plans</h1>
+      </section>
+
+      <section id="public" class="page">
+        <h1>Public Page</h1>
+      </section>
+  </div>
+</div>
+
+<script src="/contractor-dashboard.js"></script>
+<script>
+  const buttons = document.querySelectorAll('.side-btn');
+  const pages = document.querySelectorAll('.page');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const page = btn.getAttribute('data-page');
+      pages.forEach(p => p.classList.remove('active'));
+      document.getElementById(page).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

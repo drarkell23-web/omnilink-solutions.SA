@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Dashboard — Service Point Solutions</title>
+<link rel="stylesheet" href="/dashboard.css">
+<link rel="stylesheet" href="/theme.css">
+</head>
+
+<body>
+
+<header style="background:var(--panel); padding:16px; border-bottom:1px solid #222533;">
+  <div style="max-width:1200px; margin:0 auto; display:flex; gap:16px; align-items:center;">
+    <img src="/assets/logo-128.png" class="logo" style="width:56px;">
+    <div>
+      <h1 style="margin:0;">Service Point Solutions — Admin Panel</h1>
+    </div>
+  </div>
+</header>
+
+<div id="layout" style="max-width:1200px; margin:24px auto; padding:0 16px; display:flex; gap:24px;">
+
+  <div id="sidebar">
+      <img src="/assets/logo-128.png" style="width:64px; margin-bottom:10px;">
+      <h2 style="margin-bottom:20px;">Admin Menu</h2>
+
+      <button class="side-btn active" data-page="overview">📊 Overview</button>
+      <button class="side-btn" data-page="contractors">👥 Contractors</button>
+      <button class="side-btn" data-page="leads">📥 Leads</button>
+      <button class="side-btn" data-page="blocked">⛔ Blocked Users</button>
+      <button class="side-btn" data-page="logs">🧾 Logs</button>
+
+      <button id="logout" style="background:#8a0a0a; color:#fff; padding:12px; border-radius:8px; border:0; margin-top:16px;">Logout</button>
+  </div>
+
+  <div id="content" style="flex:1; background:var(--panel); border-radius:12px; padding:24px;">
+
+      <!-- OVERVIEW -->
+      <section id="overview" class="page active">
+          <h1>Platform Overview</h1>
+          <div class="card-row">
+              <div class="card">
+                  <h3>Total Contractors</h3>
+                  <p id="total-contractors">0</p>
+              </div>
+              <div class="card">
+                  <h3>Total Leads</h3>
+                  <p id="total-leads">0</p>
+              </div>
+              <div class="card">
+                  <h3>Reviews Submitted</h3>
+                  <p id="total-reviews">0</p>
+              </div>
+          </div>
+      </section>
+
+      <!-- CONTRACTORS -->
+      <section id="contractors" class="page">
+        <h1>Contractors</h1>
+        <div id="contractor-list">Loading...</div>
+      </section>
+
+      <!-- LEADS -->
+      <section id="leads" class="page">
+        <h1>Leads</h1>
+        <div id="lead-list">Loading...</div>
+      </section>
+
+      <!-- BLOCKED -->
+      <section id="blocked" class="page">
+        <h1>Blocked Users</h1>
+        <div id="blocked-list">Loading...</div>
+      </section>
+
+      <!-- LOGS -->
+      <section id="logs" class="page">
+        <h1>System Logs</h1>
+        <div id="log-view">Loading...</div>
+      </section>
+
+  </div>
+</div>
+
+<script src="/admin.js"></script>
+<script>
+  const btns = document.querySelectorAll('.side-btn');
+  const pages = document.querySelectorAll('.page');
+  btns.forEach(b=>{
+    b.addEventListener("click",()=>{
+      btns.forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      const page = b.getAttribute("data-page");
+      pages.forEach(p=>p.classList.remove("active"));
+      document.getElementById(page).classList.add("active");
+    });
+  });
+</script>
+
+</body>
+</html>

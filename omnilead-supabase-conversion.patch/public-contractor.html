@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contractor — Service Point Solutions</title>
+  <link rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/dashboard.css">
+</head>
+<body>
+  <header style="background:var(--panel); padding:12px;">
+    <div style="max-width:1200px; margin:0 auto; display:flex; align-items:center; gap:12px;">
+      <img src="/assets/logo-128.png" style="height:48px" alt="Service Point Solutions">
+      <h1 style="margin:0; font-size:18px;">Service Point Solutions</h1>
+    </div>
+  </header>
+
+  <main style="max-width:1100px; margin:24px auto; padding:0 16px;">
+    <section id="contractor-public">
+      <h2 id="pub-name">Contractor Name</h2>
+      <p id="pub-desc">Contractor details will appear here.</p>
+    </section>
+  </main>
+
+<script>
+(async function(){
+  // Try to fill contractor data if id present in query params
+  const match = location.search.match(/[?&]id=([^&]+)/);
+  if (!match) return;
+  const id = decodeURIComponent(match[1]);
+  try {
+    const res = await fetch('/api/contractor/' + id);
+    if (!res.ok) return;
+    const j = await res.json();
+    if (!j.ok || !j.contractor) return;
+    const c = j.contractor;
+    document.getElementById('pub-name').innerText = c.company_name || c.contact_name || 'Contractor';
+    document.getElementById('pub-desc').innerText = c.description || c.bio || (c.service_primary || 'No description provided.');
+  } catch(e) { console.warn(e); }
+})();
+</script>
+</body>
+</html>

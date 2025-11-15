@@ -1,0 +1,43 @@
+/* main.css - dark gradient theme for OmniSolutions */
+:root {
+  --bg-1: #0b0b15;
+  --bg-2: #11111f;
+  --panel: #151525;
+  --muted: #9aa0b2;
+  --accent-a: #6f2bff;
+  --accent-b: #ff2bc0;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#fff}
+#app{display:flex;height:100vh;overflow:hidden}
+#sidebar{width:260px;padding:20px;background:rgba(14,12,22,0.7);border-right:1px solid #ffffff08}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.logo{height:40px;width:40px;border-radius:8px;background:#fff}
+.categories{display:flex;flex-direction:column;gap:8px}
+.cat-btn{display:block;padding:10px 12px;background:#191828;border-radius:8px;color:#fff;border:0;text-align:left;cursor:pointer}
+.control-btn{margin-top:12px;padding:10px;background:linear-gradient(90deg,var(--accent-a),var(--accent-b));border:none;border-radius:8px;color:#fff;cursor:pointer;width:100%}
+.admin-only{display:block}
+
+/* Main */
+#main{flex:1;padding:28px;overflow:auto}
+.lead-form{max-width:900px;margin-bottom:28px}
+.lead-form input,.lead-form textarea,.lead-form select{display:block;margin-bottom:12px;padding:12px;border-radius:8px;border:0;background:#131224;color:#fff;width:100%}
+#lead-submit{background:linear-gradient(90deg,var(--accent-a),var(--accent-b));padding:12px;border-radius:8px;border:0;color:#fff;cursor:pointer}
+
+/* Popular chips */
+#popular-services{margin-top:10px}
+.popular-chip{display:inline-block;padding:8px 14px;background:#1f1f38;border-radius:20px;margin:6px;cursor:pointer}
+
+/* Chat panel */
+#chat-toggle{position:fixed;right:22px;bottom:22px;background:linear-gradient(90deg,var(--accent-a),var(--accent-b));color:#fff;border:none;padding:12px 18px;border-radius:24px;cursor:pointer}
+#chat-panel{position:fixed;right:0;top:0;height:100%;width:360px;background:var(--panel);box-shadow:-20px 0 40px rgba(0,0,0,0.6);padding:18px;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s}
+#chat-panel.open{transform:translateX(0)}
+#chat-form input,#chat-form textarea{width:100%;padding:10px;border-radius:8px;border:0;background:#0f0f1b;color:#fff;margin-bottom:10px}
+#chat-send{background:linear-gradient(90deg,var(--accent-a),var(--accent-b));padding:10px;border-radius:8px;border:0;color:#fff}
+
+/* Small screens */
+@media(max-width:900px){
+  #sidebar{display:none}
+  #chat-panel{width:100%}
+  #app{flex-direction:column}
+}

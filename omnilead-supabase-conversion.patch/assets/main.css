@@ -1,0 +1,33 @@
+:root{
+  --bg:#0b0712;--panel:#0f0b18;--accent1:#6b5cff;--accent2:#ee6ee9;--muted:#a9a4b5;--text:#e8e6ef;
+}
+*{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+body{margin:0;background:linear-gradient(180deg,#050213,#0a0610);color:var(--text);min-height:100vh}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-bottom:1px solid #ffffff06}
+.brand-left{display:flex;align-items:center;gap:12px}
+.logo{height:44px;width:44px;border-radius:8px;background:#fff}
+.title{font-weight:800}
+.pill{border:none;padding:8px 12px;border-radius:10px;background:#222;color:var(--text);cursor:pointer}
+.pill.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white}
+.pill.danger{background:#ff6b6b;color:#fff}
+
+.layout{display:grid;grid-template-columns:260px 1fr 320px;gap:12px;padding:18px}
+.left-col{padding:12px;border-radius:10px;background:var(--panel);height:calc(100vh - 100px);overflow:auto}
+.category-list .cat{padding:10px;margin-bottom:6px;border-radius:8px;background:#060318;cursor:pointer;border:1px solid #ffffff06}
+.main-col{padding:0 6px}
+.hero{margin-bottom:12px}
+.request-card{background:var(--panel);padding:12px;border-radius:10px;display:flex;flex-direction:column;gap:8px}
+.request-card input,.request-card select,.request-card textarea{padding:10px;border-radius:8px;border:1px solid #ffffff06;background:#070418;color:var(--text)}
+.panel{background:var(--panel);padding:12px;border-radius:10px;margin-bottom:12px}
+.services-grid{display:flex;flex-wrap:wrap;gap:8px}
+.service-pill{padding:8px 10px;border-radius:999px;background:#080417;border:1px solid #ffffff06;cursor:pointer}
+
+.right-col{padding:12px;border-radius:10px;background:transparent}
+.contractor-row{padding:10px;border-radius:8px;background:#080317;margin-bottom:8px;border:1px solid #ffffff06}
+
+.chat-btn{position:fixed;right:18px;bottom:18px;border-radius:999px;padding:12px 16px;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff;border:none;box-shadow:0 6px 20px rgba(0,0,0,0.4);z-index:1010}
+.graffiti-canvas{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1000}
+
+/* small helpers */
+.muted{color:var(--muted);font-size:13px}
+.small{font-size:13px}
