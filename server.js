@@ -6,7 +6,7 @@ import cors from "cors";
 import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
-import bcrypt from "bcryptjs";   // ✅ FIXED FOR RENDER — bcryptjs works everywhere
+import bcrypt from "bcryptjs";   // bcryptjs works everywhere, including Render
 
 dotenv.config();
 
@@ -39,7 +39,7 @@ app.use(express.static("./"));
 
 
 // ======================================================================
-// 🔐 ADMIN-PAGE LOADER (inserts your admin key inside the HTML)
+// 🔐 ADMIN PAGE — inject ADMIN_PORTAL_KEY into HTML
 // ======================================================================
 app.get("/admin-create-contractor.html", (req, res) => {
   try {
@@ -59,7 +59,7 @@ app.get("/admin-create-contractor.html", (req, res) => {
 
 
 // ======================================================================
-// 🔥 ADMIN API — CREATE CONTRACTOR (PASSWORD HASH STORED IN DB)
+// 🔥 ADMIN — CREATE CONTRACTOR (PASSWORD HASHED)
 // ======================================================================
 app.post("/api/admin/create-contractor", async (req, res) => {
   try {
@@ -69,10 +69,8 @@ app.post("/api/admin/create-contractor", async (req, res) => {
       return res.json({ ok: false, error: "Missing required fields." });
     }
 
-    // 1) HASH THE PASSWORD
     const password_hash = await bcrypt.hash(password, 10);
 
-    // 2) CREATE CONTRACTOR ROW
     const { data, error } = await supabase
       .from("contractors")
       .insert([
@@ -97,7 +95,7 @@ app.post("/api/admin/create-contractor", async (req, res) => {
 
 
 // ======================================================================
-// 🚀 CONTRACTOR LOGIN API (phone + password)
+// 🚀 CONTRACTOR LOGIN (phone + password)
 // ======================================================================
 app.post("/api/contractor/login", async (req, res) => {
   try {
@@ -112,7 +110,6 @@ app.post("/api/contractor/login", async (req, res) => {
     if (error || !contractor)
       return res.json({ ok: false, error: "Contractor not found." });
 
-    // Check password
     const match = await bcrypt.compare(password, contractor.password_hash);
     if (!match) return res.json({ ok: false, error: "Invalid password." });
 
@@ -125,7 +122,7 @@ app.post("/api/contractor/login", async (req, res) => {
 
 
 // ======================================================================
-// 📩 SAVE LEAD
+// 📩 SAVE LEAD  (THIS IS THE FIXED ROUTE YOUR CHATBOT USES)
 // ======================================================================
 app.post("/api/lead", async (req, res) => {
   try {
@@ -157,7 +154,7 @@ app.post("/api/lead", async (req, res) => {
 
 
 // ======================================================================
-// ⭐ REVIEWS — TEXT + IMAGE UPLOAD
+// ⭐ REVIEWS — TEXT + IMAGES
 // ======================================================================
 app.post("/api/review", async (req, res) => {
   try {
@@ -215,7 +212,7 @@ app.post("/api/review", async (req, res) => {
 
 
 // ======================================================================
-// 💬 MESSAGES — FROM CONTRACTOR TO ADMIN
+// 💬 CONTRACTOR → ADMIN MESSAGES
 // ======================================================================
 app.post("/api/message", async (req, res) => {
   try {
