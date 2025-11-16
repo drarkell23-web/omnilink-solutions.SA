@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Contractor Login — OmniLead</title>
+<link rel="stylesheet" href="/ui.css">
+</head>
+<body>
+<div class="container" style="min-height:100vh;display:flex;align-items:center;justify-content:center">
+  <div class="card" style="width:360px;padding:22px;border-radius:12px;background:#111;color:#fff">
+    <h2 style="margin-top:0">Contractor Login</h2>
+    <input id="phone" class="input" placeholder="Phone (e.g. 067...)" style="width:100%;padding:12px;margin-top:10px;border-radius:8px;border:none;">
+    <input id="password" class="input" placeholder="Password" type="password" style="width:100%;padding:12px;margin-top:10px;border-radius:8px;border:none;">
+    <button id="loginBtn" style="width:100%;padding:12px;margin-top:12px;background:#00aaff;border:none;border-radius:8px;color:#fff;cursor:pointer">Log in</button>
+    <div style="margin-top:10px;text-align:center;color:#bbb;font-size:13px">Use the phone & password provided by admin.</div>
+  </div>
+</div>
+
+<script>
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("password").value;
+    if (!phone || !password) return alert("Enter phone and password");
+
+    const res = await fetch("/api/contractor/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, password })
+    });
+    const j = await res.json();
+    if (!j.ok) return alert("Login failed: " + (j.error || "Unknown"));
+
+    // Save contractor info locally (simple session)
+    localStorage.setItem("omni_contractor", JSON.stringify(j.contractor));
+    // Redirect to contractor dashboard
+    window.location.href = "/contractor-dashboard.html";
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Submit Review — OmniLead</title>
+<link rel="stylesheet" href="/ui.css">
+</head>
+<body>
+<div class="container">
+<div class="card">
+<h2>Submit Review</h2>
+<input id="r_name" class="input" placeholder="Customer name (optional)">
+<select id="r_rating" class="input">
+<option value="5">⭐ 5</option>
+<option value="4">⭐ 4</option>
+<option value="3">⭐ 3</option>
+<option value="2">⭐ 2</option>
+<option value="1">⭐ 1</option>
+</select>
+<textarea id="r_comment" class="input" rows="4" placeholder="Review message"></textarea>
+<button id="submitReview">Submit Review</button>
+<button class="small" onclick="history.back()">Back</button>
+</div>
+</div>
+
+
+<script type="module">
+import { supabase } from './supabase-client.js';
+
+
+document.getElementById('submitReview').addEventListener('click', async ()=>{
+const name = document.getElementById('r_name').value || 'Customer';
+const rating = Number(document.getElementById('r_rating').value);
+const comment = document.getElementById('r_comment').value.trim();
+
+
+const { data: { user } } = await supabase.auth.getUser();
+if(!user) return alert('Please login first');
+
+
+const { error } = await supabase.from('reviews').insert([{ contractor_id: user.id, reviewer_name: name, rating, comment, created_at: new Date().toISOString() }]);
+if(error) return alert('Failed: '+error.message);
+alert('Review submitted');
+window.location.href = '/contractor-dashboard.html';
+});
+</script>
+</body>
+</html>

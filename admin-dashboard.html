@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard — OmniLink</title>
+  <link rel="stylesheet" href="assets/main.css" />
+  <style>
+    body{font-family:Inter,system-ui,sans-serif;background:#071027;color:#e6f3ff;margin:0}
+    .wrap{max-width:1200px;margin:18px auto;padding:18px}
+    header{display:flex;justify-content:space-between;align-items:center}
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:14px}
+    .card{background:#071b2c;padding:14px;border-radius:8px;border:1px solid #0e2a3b}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid #0e2a3b;text-align:left;color:#cfe8ff}
+    .btn{padding:8px 10px;border-radius:6px;background:#0a84ff;border:0;color:white;cursor:pointer}
+    select,input{padding:8px;border-radius:6px;border:1px solid #12323f;background:#071b2c;color:#e6f3ff}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Admin — OmniLink</h1>
+      <div>
+        <button id="adminLogout" class="btn">Logout</button>
+      </div>
+    </header>
+
+    <div class="grid" style="margin-top:14px">
+      <div>
+        <div class="card">
+          <h3>Leads</h3>
+          <div style="margin-bottom:8px">
+            <label>Filter by service</label>
+            <select id="filterService"><option value="">All services</option></select>
+          </div>
+          <div id="leadsTableWrap" style="max-height:520px;overflow:auto">
+            <table id="leadsTable">
+              <thead><tr><th>When</th><th>Name</th><th>Service</th><th>Contact</th><th>Assign</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Contractors</h3>
+          <div id="contractorsList" style="max-height:240px;overflow:auto"></div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="card">
+          <h3>Lead Details</h3>
+          <div id="leadDetails">Select a lead to see details</div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Actions</h3>
+          <div style="margin-top:8px">
+            <label>Select Contractor to Assign</label>
+            <select id="assignSelect"><option value="">-- choose contractor --</option></select>
+            <div style="margin-top:8px"><button id="assignBtn" class="btn">Assign Lead</button></div>
+            <div id="assignMsg" style="margin-top:8px;color:#9fb0c7"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+<script type="module">
+import { supabase } from '/public/supabase-client.js';
+
+async function ensureAdmin() {
+  const { data } = await supabase.auth.getUser();
+  if (!data?.user) location.href = '/admin-login.html';
+  return data.user;
+}
+
+async function loadServices() {
+  const res = await fetch('/api/services');
+  const j = await res.json();
+  const services = j.services || [];
+  const sel = document.getElementById('filterService');
+  services.forEach(s => {
+    const o = document.createElement('option'); o.value = s.name; o.textContent = s.name; sel.appendChild(o);
+  });
+}
+
+async function loadContractors() {
+  const res = await fetch('/api/contractors');
+  const j = await res.json();
+  const contractors = j.contractors || [];
+  const wrap = document.getElementById('contractorsList');
+  const assignSel = document.getElementById('assignSelect');
+  wrap.innerHTML = '';
+  assignSel.innerHTML = '<option value=\"\">-- choose contractor --</option>';
+  contractors.forEach(c => {
+    const d = document.createElement('div'); d.style.padding='8px'; d.innerHTML=`<strong>${c.company||c.name||c.email}</strong><div style="color:#9fb0c7">${c.main_service||c.service||''}</div>`;
+    wrap.appendChild(d);
+    const o = document.createElement('option'); o.value = c.id; o.textContent = (c.company||c.name||c.email); assignSel.appendChild(o);
+  });
+}
+
+let CURRENT_LEADS = [];
+
+async function loadLeads() {
+  const res = await fetch('/api/leads'); // note: we will add /api/leads endpoint fallback if missing
+  const j = await res.json();
+  const leads = j.leads || j || [];
+  CURRENT_LEADS = leads;
+  renderLeadsTable(leads);
+}
+
+function renderLeadsTable(leads) {
+  const tbody = document.querySelector('#leadsTable tbody');
+  tbody.innerHTML = '';
+  leads.forEach(l => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="white-space:nowrap">${new Date(l.created_at).toLocaleString()}</td>
+      <td>${l.name}</td><td>${l.service||''}</td>
+      <td>${l.phone || l.email || ''}</td>
+      <td>
+        <button class="btn smallView" data-id="${l.id}">View</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  // attach view click
+  document.querySelectorAll('.smallView').forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      const id = e.target.dataset.id;
+      const lead = CURRENT_LEADS.find(x=>String(x.id)===String(id));
+      showLead(lead);
+    });
+  });
+}
+
+function showLead(l) {
+  const el = document.getElementById('leadDetails');
+  el.innerHTML = `<div><strong>${l.name}</strong> <div style="color:#9fb0c7">${l.service}</div></div>
+    <div style="margin-top:8px">Phone: ${l.phone||''}</div>
+    <div>Email: ${l.email||''}</div>
+    <div style="margin-top:8px;color:#cfe8ff">${l.message||''}</div>`;
+  el.dataset.leadId = l.id;
+}
+
+document.getElementById('assignBtn').addEventListener('click', async ()=>{
+  const leadId = document.getElementById('leadDetails').dataset.leadId;
+  const contractorId = document.getElementById('assignSelect').value;
+  if (!leadId || !contractorId) { document.getElementById('assignMsg').innerText = 'Pick a lead and a contractor'; return; }
+  document.getElementById('assignMsg').innerText = 'Assigning...';
+  // call server API to assign (PATCH)
+  const res = await fetch('/api/lead', { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ id: leadId, contractor_id: contractorId }) });
+  const j = await res.json();
+  document.getElementById('assignMsg').innerText = j.ok ? 'Assigned' : ('Error: ' + (j.error?.message || JSON.stringify(j.error)));
+  await loadLeads();
+  setTimeout(()=>document.getElementById('assignMsg').innerText='',1800);
+});
+
+document.getElementById('filterService').addEventListener('change', async (e)=>{
+  const svc = e.target.value;
+  if (!svc) { renderLeadsTable(CURRENT_LEADS); return; }
+  renderLeadsTable(CURRENT_LEADS.filter(l=>l.service===svc));
+});
+
+document.getElementById('adminLogout').addEventListener('click', async ()=>{
+  await supabase.auth.signOut();
+  location.href='/';
+});
+
+// initial load
+(async ()=>{
+  await ensureAdmin();
+  await loadServices();
+  await loadContractors();
+  // try fetch from /api/leads (server-side) else fallback to supabase client call
+  try {
+    await loadLeads();
+  } catch (e) {
+    // fallback: read directly via client (will only work with policies allowing admin)
+    const { data: leads } = await supabase.from('leads').select('*').order('created_at',{ascending:false});
+    CURRENT_LEADS = leads || [];
+    renderLeadsTable(CURRENT_LEADS);
+  }
+})();
+</script>
+</body>
+</html>

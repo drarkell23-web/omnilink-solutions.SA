@@ -1,0 +1,29 @@
+:root{ --bg1:#070216; --bg2:#0f1730; --card:#0b0b16; --muted:#bdb8d8; --accent:#6f4cff }
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#eee}
+.admin-app{display:flex;min-height:100vh}
+.admin-side{width:260px;padding:18px;border-right:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:12px}
+.logo{font-weight:900;font-size:20px}
+.logo span{color:var(--accent)}
+.admin-info{color:var(--muted);font-size:13px}
+.admin-nav{display:flex;flex-direction:column;gap:8px}
+.nav-btn{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:8px;color:var(--muted);text-align:left;cursor:pointer}
+.nav-btn.active{background:linear-gradient(90deg,var(--accent),#2ec1ff);color:#07101b;font-weight:800}
+.admin-footer{margin-top:auto}
+.small{font-size:12px;padding:8px;border-radius:8px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04)}
+.admin-main{flex:1;padding:18px;display:flex;flex-direction:column;gap:12px}
+.admin-top{display:flex;align-items:center;justify-content:space-between}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:rgba(255,255,255,0.02);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+.stat{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.stat-value{font-size:28px;font-weight:900}
+.toolbar{display:flex;gap:8px;margin-bottom:8px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse}
+table thead th{padding:10px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.04)}
+table tbody td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.02)}
+.btn{padding:8px 10px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--accent),#2ec1ff);color:#07101b;font-weight:800;cursor:pointer}
+.list{max-height:320px;overflow:auto}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+input[type="text"], input[type="search"], select{padding:8px;border-radius:8px;background:#050417;border:1px solid rgba(255,255,255,0.04);color:#fff}

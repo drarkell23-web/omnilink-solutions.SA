@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contractor Sign Up</title>
+
+  <script type="module">
+    import { supabase } from "./supabase-client.js";
+
+    async function signupContractor() {
+      const company = document.getElementById("company").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const phone = document.getElementById("phone").value;
+      const service = document.getElementById("service").value;
+      const logo = document.getElementById("logo").files[0];
+
+      if (!company || !email || !password || !service) {
+        alert("Please complete all required fields.");
+        return;
+      }
+
+      // 1️⃣ CREATE AUTH USER (EMAIL + PASSWORD)
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { company, phone, service }
+        }
+      });
+
+      if (error) {
+        alert("Signup failed: " + error.message);
+        return;
+      }
+
+      const userId = data.user.id;
+      let logoUrl = null;
+
+      // 2️⃣ UPLOAD LOGO IF PROVIDED
+      if (logo) {
+        const ext = logo.name.split('.').pop();
+        const filePath = `contractor-logos/${userId}.${ext}`;
+
+        const upload = await supabase.storage
+          .from("contractor-assets")
+          .upload(filePath, logo, { upsert: true });
+
+        if (!upload.error) {
+          logoUrl = supabase.storage.from("contractor-assets")
+            .getPublicUrl(filePath).data.publicUrl;
+        }
+      }
+
+      // 3️⃣ SAVE CONTRACTOR IN DATABASE
+      await supabase.from("contractors").insert([
+        {
+          auth_id: userId,
+          company,
+          email,
+          phone,
+          service,
+          logo_url: logoUrl,
+          badge: "Standard",
+          created_at: new Date()
+        }
+      ]);
+
+      alert("Account created! Please check your email to verify.");
+      window.location.href = "/contractor-login.html";
+    }
+
+    window.signupContractor = signupContractor;
+  </script>
+
+  <style>
+    body { background:#111; color:white; font-family:Arial; padding:40px; }
+    .box { max-width:450px; margin:auto; background:#222; padding:30px; border-radius:12px; }
+    input, select {
+      width:100%; padding:12px; margin-top:10px; border-radius:6px; border:none;
+    }
+    label { margin-top:15px; display:block; font-size:14px; }
+    button {
+      width:100%; padding:14px; background:#00aaff; color:white;
+      border:none; border-radius:8px; margin-top:20px; cursor:pointer;
+      font-size:16px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h2>Contractor Sign Up</h2>
+
+    <label>Company Name *</label>
+    <input id="company" type="text">
+
+    <label>Email *</label>
+    <input id="email" type="email">
+
+    <label>Password *</label>
+    <input id="password" type="password">
+
+    <label>Phone Number (optional)</label>
+    <input id="phone" type="text">
+
+    <label>Primary Service *</label>
+    <select id="service">
+      <option value="">Select a service</option>
+      <option>Plumbing</option>
+      <option>Electrical</option>
+      <option>Roofing</option>
+      <option>Painting</option>
+      <option>Cleaning</option>
+      <option>Landscaping</option>
+      <option>Flooring</option>
+      <option>General Repairs</option>
+      <option>IT Networking</option>
+      <option>HVAC</option>
+    </select>
+
+    <label>Company Logo (optional)</label>
+    <input id="logo" type="file" accept="image/*">
+
+    <button onclick="signupContractor()">Create Contractor Account</button>
+  </div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contractor — OmniSolutions</title>
+<link rel="stylesheet" href="/assets/main.css">
+<style>.contractor-public{padding:18px}.contractor-header{display:flex;gap:12px;align-items:center}.logo-lg{width:96px;height:96px;border-radius:12px;background:#111}</style>
+</head>
+<body>
+  <div class="contractor-public">
+    <div class="contractor-header">
+      <img id="cpLogo" class="logo-lg" src="/assets/logo.png"/>
+      <div>
+        <h2 id="cpName">Contractor</h2>
+        <div id="cpService" class="muted"></div>
+        <div id="cpBadge"></div>
+      </div>
+    </div>
+    <div id="cpAbout" style="margin-top:12px"></div>
+    <div id="cpReviews" style="margin-top:12px"></div>
+    <div style="margin-top:12px"><button id="cpContact" class="pill primary">Contact</button></div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id') || location.pathname.split('/').pop();
+    async function load(){
+      const res = await fetch('/api/contractor/' + id);
+      const j = await res.json();
+      const c = j.contractor || {};
+      document.getElementById('cpName').textContent = c.company || c.name || 'Contractor';
+      document.getElementById('cpService').textContent = c.service || '';
+      if (c.logo) document.getElementById('cpLogo').src = c.logo;
+      document.getElementById('cpAbout').textContent = c.about || 'No description';
+      document.getElementById('cpContact').addEventListener('click', ()=> {
+        // deep link to chatbot prefilled:
+        const url = '/?openChat=1&service=' + encodeURIComponent(c.service || '') + '&contractor=' + encodeURIComponent(id);
+        location.href = url;
+      });
+      const reviews = j.reviews || [];
+      const rbox = document.getElementById('cpReviews'); rbox.innerHTML='';
+      reviews.forEach(r=>{
+        const el = document.createElement('div'); el.style.padding='8px'; el.style.borderBottom='1px solid #ffffff06';
+        el.innerHTML = `<strong>${r.reviewer_name||''}</strong><div class="muted">${(r.rating||0)} ★</div><div>${r.comment||''}</div>`;
+        rbox.appendChild(el);
+      });
+    }
+    load();
+  </script>
+</body>
+</html>
