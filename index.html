@@ -142,7 +142,9 @@
       <span id="chatClose" class="close-btn">×</span>
     </div>
 
-    <div class="chat-body">
+    <!-- FIXED FORM (IMPORTANT) -->
+    <form id="leadForm" class="chat-body">
+
       <label>Full Name:</label>
       <input type="text" id="leadName">
 
@@ -156,10 +158,10 @@
       <input type="text" id="leadService">
 
       <label>Message:</label>
-      <textarea id="leadMsg"></textarea>
+      <textarea id="leadMessage"></textarea> <!-- FIXED ID -->
 
-      <button id="chatSend" class="btn">Send Request</button>
-    </div>
+      <button type="submit" class="btn">Send Request</button>
+    </form>
 
   </div>
 </div>
@@ -170,4 +172,3 @@
 
 </body>
 </html>
-
