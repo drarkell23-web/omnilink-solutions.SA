@@ -1,150 +1,152 @@
-/* main.js - interacts with index.html and server endpoints */
-(async function(){
-  // fetch services and populate sidebar / service lists
-  async function getServices(){
-    try {
-      const res = await fetch('/api/services');
-      const json = await res.json();
-      return (json.services || json);
-    } catch(e){ console.error(e); return []; }
+const $ = sel => document.querySelector(sel);
+const $$ = sel => [...document.querySelectorAll(sel)];
+
+let SERVICES = [];
+let CONTRACTORS = [];
+let REVIEWS = [];
+
+// ------------------------------------------------
+// LOAD SERVICES
+// ------------------------------------------------
+async function loadServices() {
+  try {
+    const res = await fetch("/api/services");
+    const j = await res.json();
+
+    SERVICES = j.services || [];
+
+    renderCategories();
+    renderServices();
+  } catch (err) {
+    console.warn("Service load failed", err);
+    $("#servicesGrid").textContent = "Services unavailable.";
   }
+}
 
-  const services = await getServices();
-  // group by category
-  const cats = {};
-  for (const s of services) {
-    const cat = s.category || s.cat || s.catname || s.cat || 'Other';
-    if (!cats[cat]) cats[cat]=[];
-    cats[cat].push(s);
+// ------------------------------------------------
+// LOAD CONTRACTORS
+// ------------------------------------------------
+async function loadContractors() {
+  try {
+    const res = await fetch("/api/contractors");
+    const j = await res.json();
+
+    CONTRACTORS = j.contractors || [];
+    renderTopContractors();
+  } catch (e) {
+    console.warn("Contractors load failed", e);
   }
+}
 
-  // populate sidebar categories
-  const sidebar = document.getElementById('sidebar-categories');
-  Object.keys(cats).forEach(cat=>{
-    const btn = document.createElement('button');
-    btn.className = 'cat-btn';
-    btn.textContent = cat;
-    btn.addEventListener('click', ()=> renderCategory(cat));
-    sidebar.appendChild(btn);
-  });
+// ------------------------------------------------
+// LOAD REVIEWS
+// ------------------------------------------------
+async function loadReviews() {
+  try {
+    const res = await fetch("/api/review");
+    const j = await res.json();
 
-  // fill lead-service select & popular chips (first 20)
-  const leadService = document.getElementById('lead-service');
-  const popular = document.getElementById('popular-services');
-  const categoryServices = document.getElementById('category-services');
+    REVIEWS = j.reviews || [];
+    renderTestimonials();
+  } catch (e) {
+    console.warn("Reviews load failed", e);
+  }
+}
 
-  services.slice(0,120).forEach(s=>{
-    const opt = document.createElement('option');
-    opt.value = s.name || s.service || s.name;
-    opt.textContent = s.name || s.service || s.name;
-    leadService.appendChild(opt);
-  });
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadServices();
+  await loadContractors();
+  await loadReviews();
+  wireButtons();
+});
 
-  services.slice(0,30).forEach(s=>{
-    const chip = document.createElement('div');
-    chip.className = 'popular-chip';
-    chip.textContent = s.name;
-    chip.addEventListener('click', ()=> openChatWithService(s.name));
-    popular.appendChild(chip);
-  });
+// ------------------------------------------------
+// RENDER UI
+// ------------------------------------------------
+function renderCategories() {
+  const el = $("#categories");
+  el.innerHTML = "";
 
-  function renderCategory(cat){
-    categoryServices.innerHTML = `<h4>${cat}</h4>`;
-    const list = document.createElement('div');
-    (cats[cat] || []).forEach(s=>{
-      const c = document.createElement('div');
-      c.className = 'popular-chip service-chip';
-      c.textContent = s.name;
-      c.addEventListener('click', ()=> openChatWithService(s.name));
-      list.appendChild(c);
+  const cats = [...new Set(SERVICES.map(s => s.category || "Other"))];
+
+  cats.forEach(cat => {
+    const d = document.createElement("div");
+    d.className = "cat";
+    d.textContent = cat;
+
+    d.addEventListener("click", () => {
+      $$(".service-pill").forEach(p => {
+        p.style.display = p.dataset.cat === cat ? "inline-block" : "none";
+      });
     });
-    categoryServices.appendChild(list);
-  }
 
-  // default render first cat
-  const firstCat = Object.keys(cats)[0];
-  if (firstCat) renderCategory(firstCat);
-
-  /* -- Chat panel behavior -- */
-  const chatPanel = document.getElementById('chat-panel');
-  const chatToggle = document.getElementById('chat-toggle');
-  document.getElementById('chat-toggle')?.addEventListener('click', ()=> chatPanel.classList.add('open'));
-  document.getElementById('chat-close')?.addEventListener('click', ()=> chatPanel.classList.remove('open'));
-
-  function openChatWithService(svc){
-    const el = document.getElementById('chat-service');
-    if (el) el.value = svc;
-    chatPanel.classList.add('open');
-  }
-
-  // wire lead form submission to server /api/lead
-  const leadForm = document.getElementById('lead-form');
-  leadForm?.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const data = {
-      name: document.getElementById('lead-name').value,
-      phone: document.getElementById('lead-phone').value,
-      email: document.getElementById('lead-email').value,
-      service: document.getElementById('lead-service').value,
-      message: document.getElementById('lead-message').value
-    };
-    const res = await fetch('/api/lead', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
-    const json = await res.json();
-    if (json.ok) {
-      // small animation / graffiti
-      showGraffiti("✅ Lead sent");
-      alert('Lead sent — admin will be notified.');
-      leadForm.reset();
-    } else {
-      alert('Failed to send lead');
-    }
+    el.appendChild(d);
   });
+}
 
-  // chat form send
-  document.getElementById('chat-form')?.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const data = {
-      name: document.getElementById('chat-name').value,
-      phone: document.getElementById('chat-phone').value,
-      email: document.getElementById('chat-email').value,
-      service: document.getElementById('chat-service').value,
-      message: document.getElementById('chat-message').value
-    };
-    const res = await fetch('/api/lead', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
-    const json = await res.json();
-    if (json.ok) {
-      showGraffiti("🎉 Sent");
-      alert('Chat request sent. Admin & contractors will be notified.');
-      document.getElementById('chat-form').reset();
-      document.getElementById('chat-panel').classList.remove('open');
-    } else {
-      alert('Failed to send');
-    }
+function renderServices() {
+  const el = $("#servicesGrid");
+  el.innerHTML = "";
+
+  SERVICES.forEach(s => {
+    const d = document.createElement("div");
+    d.className = "service-pill";
+    d.dataset.cat = s.category;
+    d.textContent = s.name;
+
+    d.addEventListener("click", () => {
+      document.dispatchEvent(new CustomEvent("service-click", { detail: s }));
+      $("#chatOpen").click();
+
+      setTimeout(() => {
+        $("#leadService").value = s.name;
+        window.dispatchEvent(new CustomEvent("omni-service-selected", { detail: s }));
+      }, 200);
+    });
+
+    el.appendChild(d);
   });
+}
 
-  /* Graffiti sparkle */
-  function showGraffiti(text){
-    const g = document.createElement('div');
-    g.className = 'graffiti';
-    const span = document.createElement('div');
-    span.className = 'spark';
-    span.textContent = text;
-    g.appendChild(span);
-    document.body.appendChild(g);
-    setTimeout(()=> g.remove(), 2000);
-  }
+function renderTopContractors() {
+  const el = $("#topList");
+  el.innerHTML = "";
 
-  // top contractors button (demo open contractor list)
-  document.getElementById('top-contractors-btn')?.addEventListener('click', async ()=>{
-    // for demo, load contractors and pop an alert or modal — here we fetch contractors
-    const res = await fetch('/api/contractors');
-    const json = await res.json();
-    const names = (json.contractors||[]).slice(0,10).map(c => c.company_name || c.contact_name || c.phone).join('\n');
-    alert('Top contractors:\n' + (names||'none'));
+  const list = CONTRACTORS.slice(0, 6);
+
+  list.forEach(c => {
+    const row = document.createElement("div");
+    row.innerHTML = `
+      <strong>${c.company}</strong>
+      <div class="muted">${c.service || ""}</div>
+    `;
+    el.appendChild(row);
   });
+}
 
-  // admin button - opens admin-dashboard.html (protected by admin secret)
-  document.getElementById('admin-btn')?.addEventListener('click', ()=> location.href='/admin-dashboard.html');
-  document.getElementById('contractor-dashboard-btn')?.addEventListener('click', ()=> location.href='/contractor-dashboard.html');
+function renderTestimonials() {
+  const el = $("#testimonials");
+  if (!el) return;
 
-})();
+  el.innerHTML = "";
+
+  REVIEWS.slice(0, 6).forEach(r => {
+    const d = document.createElement("div");
+    d.innerHTML = `
+      <strong>${r.reviewer_name}</strong> — ${r.rating}★
+      <div>${r.comment}</div>
+    `;
+    el.appendChild(d);
+  });
+}
+
+// ------------------------------------------------
+// BUTTONS
+// ------------------------------------------------
+function wireButtons() {
+  const bAdmin = $("#btnAdmin");
+  if (bAdmin) bAdmin.onclick = () => location.href = "/admin-dashboard.html";
+
+  const bContractor = $("#btnContractor");
+  if (bContractor) bContractor.onclick = () => location.href = "/contractor-dashboard.html";
+}
