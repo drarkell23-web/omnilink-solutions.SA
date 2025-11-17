@@ -1,93 +1,109 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Service Point SA — All Services</title>
 
-  <title>OmniLink Solutions — All Services</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Main Styles -->
+  <!-- Styles -->
   <link rel="stylesheet" href="assets/main.css" />
   <link rel="stylesheet" href="assets/chatbot.css" />
 
-  <!-- JS -->
-  <script src="assets/main.js" defer></script>
-  <script src="assets/chatbot.js" defer></script>
-
+  <!-- Client code -->
+  <script type="module" src="assets/main.js" defer></script>
+  <script type="module" src="assets/chatbot.js" defer></script>
 </head>
-
 <body>
+  <header class="site-header">
+    <div class="brand">
+      <div class="logo">Service Point SA</div>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggle" class="small-btn">Toggle Theme</button>
+      <button id="btnContractor" class="small-btn">Contractor</button>
+      <button id="btnAdmin" class="small-btn">Admin</button>
+    </div>
+  </header>
 
-<header>
-  OmniLink Solutions — All Services
-</header>
+  <div class="layout">
+    <!-- LEFT BAR -->
+    <aside class="leftbar">
+      <div class="leftbar-inner">
+        <div class="left-title">Categories</div>
 
-<!-- SERVICE CATEGORIES -->
-<div class="section-title">Categories</div>
-<div id="categories"></div>
+        <div id="categoriesList" class="categories-list">
+          <!-- populated by JS -->
+        </div>
 
-<!-- SERVICES GRID -->
-<div class="section-title">All Services</div>
-<div id="servicesGrid"></div>
+        <div class="search-block">
+          <input id="serviceSearch" placeholder="Search 200+ services..." />
+        </div>
 
-<!-- TOP CONTRACTORS -->
-<div class="section-title">Top Rated Contractors</div>
-<div id="topList" style="padding:20px;"></div>
+        <div class="left-bottom">
+          <button id="openChatBtn" class="btn-primary">Need Help? Chat</button>
+        </div>
+      </div>
+    </aside>
 
-<!-- QUICK BUTTONS -->
-<div style="text-align:center; margin-top:20px;">
-  <button id="btnContractor" class="btn">SPC</button>
-  <button id="btnAdmin" class="btn">+</button>
-</div>
+    <!-- MAIN -->
+    <main class="main-area">
+      <section class="top-row">
+        <div class="top-left">
+          <h2>All Services</h2>
+          <div id="servicesGrid" class="services-grid">Loading services…</div>
+        </div>
 
-<!-- CHATBOT BUTTON -->
-<button id="chatOpen" class="chat-open-btn">
-  💬 Need Help?
-</button>
+        <div class="top-right">
+          <h3>Top Contractors</h3>
+          <div id="topContractors" class="contractors-list">Loading contractors…</div>
 
-<!-- CHATBOT MODAL -->
-<div id="chatModal" class="chat-modal hidden">
-  <div class="chat-box">
+          <h3 style="margin-top:18px">Testimonials</h3>
+          <div id="testimonials" class="testimonials">Loading reviews…</div>
+        </div>
+      </section>
+    </main>
+  </div>
 
+  <!-- Chatbot modal / floating widget -->
+  <div id="chatWidget" class="chat-widget hidden">
     <div class="chat-header">
-      Omni Assistant
-      <span id="chatClose" class="close-btn">×</span>
+      <strong>Omni Assistant</strong>
+      <button id="chatClose" class="close-x">×</button>
     </div>
 
     <div class="chat-body">
-      <label>Full Name:</label>
-      <input type="text" id="leadName" placeholder="Your full name">
+      <div id="chatFlow" class="chat-flow"></div>
 
-      <label>Phone:</label>
-      <input type="text" id="leadPhone" placeholder="Phone number">
+      <form id="leadForm" class="lead-form">
+        <input id="leadName" placeholder="Full name" />
+        <input id="leadPhone" placeholder="Phone" />
+        <input id="leadEmail" placeholder="Email (optional)" />
+        <input id="leadService" placeholder="Service (choose or type)" />
+        <textarea id="leadMessage" placeholder="Describe the job or add details"></textarea>
 
-      <label>Email:</label>
-      <input type="text" id="leadEmail" placeholder="you@example.com">
+        <div class="contractor-select" id="contractorPick" style="display:none;">
+          <small>Select contractor (optional)</small>
+          <div id="contractorOptions" class="contractor-options"></div>
+        </div>
 
-      <label>Service Needed:</label>
-      <input type="text" id="leadService" placeholder="Which service?">
-
-      <label>Message:</label>
-      <textarea id="leadMessage" placeholder="Describe the job"></textarea>
-
-      <div id="contractorPick" style="display:none; margin:10px 0;">
-        <div id="contractorOptions"></div>
-      </div>
-
-      <button id="chatSend" class="btn">Send Request</button>
-
-      <div id="chatFlow" class="chat-flow" style="margin-top:12px; max-height:160px; overflow:auto;"></div>
+        <div class="form-row">
+          <button id="leadSend" class="btn-primary" type="submit">Send Request</button>
+          <button id="leadClear" class="small-btn" type="button">Clear</button>
+        </div>
+      </form>
     </div>
-
   </div>
-</div>
 
-<footer>
-  © 2025 OmniLink Solutions — All rights reserved.
-</footer>
+  <footer class="site-footer">
+    © <span id="year"></span> Service Point SA — All rights reserved.
+  </footer>
 
+  <script>
+    // set year
+    document.getElementById('year').innerText = new Date().getFullYear();
+  </script>
 </body>
 </html>
