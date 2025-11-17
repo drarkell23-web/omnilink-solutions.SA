@@ -1,92 +1,65 @@
+/* assets/main.css (paste to assets/) */
 :root{
-  --bg: #0b0e12;
-  --panel: #0f1419;
-  --muted: #9aa5b1;
-  --accent: linear-gradient(135deg,#7b61ff,#ff6fa3);
-  --card-border: rgba(255,255,255,0.03);
-  --glass: rgba(255,255,255,0.02);
-  --pill: #141821;
-  --text: #e6eef6;
+  --bg:#0b0b0c;
+  --panel:#0f1112;
+  --muted:#9aa3ad;
+  --accent:#0a84ff;
+  --accent-2:#00e6c3;
+  --card:#141617;
+  --glass: rgba(255,255,255,0.03);
 }
-
-/* reset */
-*{box-sizing:border-box;margin:0;padding:0}
-html,body,#app{height:100%}
-body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
-
-/* layout */
+*{box-sizing:border-box}
+html,body,#app{height:100%;margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(180deg,#070707,#0f0f11);color:#fff}
 #app{display:flex;min-height:100vh}
-.sidebar{width:260px;padding:28px 18px;background:linear-gradient(180deg,#0b0f13 0%, #0a0d11 100%);border-right:1px solid var(--card-border);display:flex;flex-direction:column;gap:18px}
-.brand{font-weight:600;font-size:18px;margin-bottom:6px}
-.sidebar-cats{display:flex;flex-direction:column;gap:10px;overflow:auto;padding-right:6px}
-.cat-btn{background:var(--pill);padding:10px 12px;border-radius:10px;color:var(--text);cursor:pointer;border:1px solid transparent;display:flex;justify-content:space-between;align-items:center}
-.cat-btn:hover{border-color:rgba(255,255,255,0.04)}
-.cat-count{opacity:.6;font-size:12px;padding-left:8px}
-
-/* main area */
-.main-area{flex:1;display:flex;flex-direction:column}
-.topbar{padding:22px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;justify-content:center}
-.search-wrap{width:80%;max-width:960px;display:flex;gap:10px}
-.search-wrap input{flex:1;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:#081018;color:var(--text)}
-.search-wrap button{padding:10px 14px;border-radius:10px;border:none;background-image:var(--accent);color:white;cursor:pointer}
-
-/* content */
-.content{display:flex;gap:24px;padding:20px}
-.left-col{flex:1}
-.right-col{width:320px;display:flex;flex-direction:column;gap:18px}
-
-.panel{background:var(--panel);padding:18px;border-radius:12px;border:1px solid var(--card-border);box-shadow:0 6px 26px rgba(0,0,0,0.6)}
-.panel h3{margin-bottom:12px}
-.small{padding:14px}
-
-/* services grid */
-.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-height:calc(100vh - 220px);overflow:auto;padding-right:6px}
-.service-pill{background:var(--glass);padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;display:flex;flex-direction:column}
-.service-title{font-weight:600;font-size:14px}
-.service-sub{font-size:12px;color:var(--muted);margin-top:6px}
-
-/* contractor cards list in right */
-#topContractors .contractor-row{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:8px;display:flex;gap:10px;align-items:center;cursor:pointer}
-#topContractors img{width:40px;height:40px;border-radius:50%;object-fit:cover}
-#testimonials .test{padding:10px;background:rgba(255,255,255,0.015);border-radius:8px;margin-bottom:8px;color:var(--muted)}
-
-/* pagination */
-.pagination{display:flex;gap:8px;margin-top:12px}
-.page-btn{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.02);cursor:pointer}
-.page-btn.active{background-image:var(--accent);color:#fff;border:none}
-
-/* chatbot */
-.chat-open-btn{position:fixed;right:24px;bottom:24px;background-image:var(--accent);border:none;padding:12px 18px;border-radius:999px;color:#fff;cursor:pointer;z-index:80}
-.chat-modal{position:fixed;right:24px;bottom:24px;width:360px;height:520px;background:var(--panel);border-radius:12px;border:1px solid var(--card-border);box-shadow:0 12px 44px rgba(0,0,0,0.6);z-index:90;display:flex;flex-direction:column}
-.chat-modal.hidden{display:none}
-.chat-box{display:flex;flex-direction:column;height:100%}
-.chat-header{padding:12px 14px;border-bottom:1px solid var(--card-border);display:flex;justify-content:space-between;align-items:center;font-weight:600}
-.close-x{background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer}
-.chat-body{padding:12px;display:flex;flex-direction:column;height:100%}
-.chat-flow{flex:1;overflow:auto;padding-bottom:8px;margin-bottom:8px}
-.msg{margin-bottom:8px;padding:8px 10px;border-radius:8px;max-width:86%}
-.msg.bot{background:rgba(255,255,255,0.03);align-self:flex-start}
-.msg.user{background:rgba(123,97,255,0.14);align-self:flex-end}
-.lead-form{display:flex;flex-direction:column;gap:8px}
-.lead-form input, .lead-form textarea, .lead-form select{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:#081018;color:var(--text)}
-.lead-form textarea{min-height:80px;resize:vertical}
-.btn{padding:10px;border-radius:8px;border:none;cursor:pointer;background-image:var(--accent);color:white}
-
-/* contractor options inside chat */
-.contractor-options{display:flex;flex-direction:column;gap:8px;margin:6px 0}
-.contractor-card{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);cursor:pointer}
-.contractor-card .meta{font-size:13px;color:var(--muted)}
-
-/* responsive */
-@media (max-width:1100px){
-  .services-grid{grid-template-columns:repeat(2,1fr)}
-  .sidebar{display:none}
-  .right-col{width:260px}
+#leftSidebar{
+  width:300px;background:linear-gradient(180deg,#0e1113,#0b0d0f);border-right:1px solid rgba(255,255,255,0.03);
+  padding:22px;display:flex;flex-direction:column;gap:14px;
 }
-@media (max-width:760px){
-  .main-area{padding:0}
-  .content{flex-direction:column}
-  .services-grid{grid-template-columns:repeat(1,1fr)}
-  .right-col{width:100%}
-  .chat-modal{right:12px;left:12px;bottom:12px;width:auto;height:60vh}
+.brand{font-size:18px;font-weight:700;letter-spacing:0.6px}
+#sidebarSearch input{width:100%;padding:10px;border-radius:10px;border:none;background:var(--glass);color:#fff}
+nav#categoryList{overflow:auto;flex:1;padding-top:6px}
+.cat{padding:10px 12px;border-radius:10px;margin-bottom:8px;background:transparent;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.cat:hover{background:rgba(255,255,255,0.02)}
+.cat .caret{opacity:0.7}
+.sublist{margin-top:8px;padding-left:6px;display:none}
+.sublist .svc{display:inline-block;margin:6px 6px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.03);cursor:pointer;font-size:13px}
+.sidebar-footer{margin-top:12px;border-top:1px solid rgba(255,255,255,0.02);padding-top:12px;font-size:13px;color:var(--muted)}
+.sidebar-top div{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-size:13px}
+.apply-link{display:block;margin-top:8px;color:var(--muted);text-decoration:none;font-size:13px}
+
+#mainContent{flex:1;padding:20px 28px;overflow:auto}
+.main-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.main-header h1{margin:0;font-size:22px}
+.muted{color:var(--muted);font-size:13px}
+.services-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.service-card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:14px;border-radius:10px;display:flex;flex-direction:column;gap:8px;cursor:pointer;min-height:90px}
+.service-card small{color:var(--muted);font-size:12px}
+.service-title{font-weight:600}
+.panel{margin-top:18px;padding:14px;border-radius:10px;background:linear-gradient(90deg,#0b0c0d,#0f1213)}
+.testimonials .t-item{padding:10px;border-bottom:1px dashed rgba(255,255,255,0.02);font-size:14px}
+
+.btn{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+.btn.chat-btn{background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 26px rgba(10,132,255,0.06)}
+.row{display:flex;gap:10px;align-items:center}
+.primary{background:var(--accent)}
+
+.chat-modal{position:fixed;right:28px;bottom:28px;width:380px;max-width:calc(100% - 40px);z-index:1200;box-shadow:0 18px 60px rgba(0,0,0,0.6)}
+.chat-shell{background:linear-gradient(180deg,#0c0d0e,#060708);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.04)}
+.chat-head{display:flex;justify-content:space-between;padding:12px 14px;background:linear-gradient(90deg,#07122511,#00000000);font-weight:600}
+.chat-body{padding:12px;display:flex;flex-direction:column;gap:10px}
+.chat-flow{height:160px;overflow:auto;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01)}
+.msg{padding:8px;border-radius:8px;margin-bottom:8px;max-width:85%}
+.msg.bot{background:rgba(255,255,255,0.02);align-self:flex-start}
+.msg.user{background:linear-gradient(90deg,var(--accent),var(--accent-2));align-self:flex-end;color:#000}
+
+.contractor-options{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.contractor-card{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);min-width:170px}
+.contractor-card img{width:48px;height:48px;border-radius:8px;object-fit:cover}
+.profile-panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#0b0c0d;padding:18px;border-radius:12px;width:720px;max-width:95%;z-index:1300}
+.hidden{display:none}
+.graffiti-canvas{position:fixed;right:0;bottom:0;pointer-events:none;z-index:1100}
+@media(max-width:900px){
+  #leftSidebar{display:none}
+  .chat-modal{left:8px;right:8px;width:auto}
+  .services-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
 }
