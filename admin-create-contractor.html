@@ -1,57 +1,46 @@
-<!DOCTYPE html>
+<!-- admin-create-contractor.html (paste to project root) -->
+<!doctype html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>Create Contractor (Admin)</title>
-  <style>
-    body{ background:#111; color:#fff; font-family:Arial; padding:40px; text-align:center; }
-    #card{ max-width:450px; margin:auto; background:#1c1c1c; padding:25px; border-radius:12px; }
-    input{ width:100%; padding:10px; margin-top:10px; border-radius:6px; border:none; }
-    button{ width:100%; padding:14px; background:#00aaff; border:none; border-radius:10px; color:white; font-size:18px; margin-top:15px; cursor:pointer; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Admin — Create Contractor</title>
+<link rel="stylesheet" href="assets/main.css">
 </head>
 <body>
-  <div id="locked" style="display:none;">
-    <h2>Admin Portal Locked</h2>
-    <p>Invalid or missing admin key.</p>
-  </div>
+  <div style="max-width:520px;margin:36px auto;padding:18px;background:#0c0d0e;border-radius:12px">
+    <h2>Create Contractor (Admin)</h2>
+    <p class="muted">This page is protected by a key in the URL</p>
 
-  <div id="content" style="display:none;">
-    <div id="card">
-      <h2>Create Contractor</h2>
-      <input id="company" placeholder="Company Name">
-      <input id="phone" placeholder="Phone Number">
-      <input id="password" placeholder="Password">
-      <input id="telegram" placeholder="Telegram Chat ID (optional)">
-      <button id="createBtn">Create Contractor</button>
-      <p id="result" style="margin-top:10px"></p>
+    <label>Admin Key (from URL)</label>
+    <input id="adminKey" placeholder="admin key (auto filled from URL)" />
+
+    <label>Company</label><input id="company" />
+    <label>Phone</label><input id="phone" />
+    <label>Password</label><input id="password" type="password" />
+    <label>Telegram Chat ID (optional)</label><input id="telegram" />
+
+    <div class="row">
+      <button id="createBtn" class="btn primary">Create Contractor</button>
     </div>
+    <div id="result" style="margin-top:12px"></div>
   </div>
 
   <script>
-    // server injects ADMIN_PORTAL_KEY placeholder
-    const ADMIN_PORTAL_KEY = "{{ADMIN_PORTAL_KEY}}";
-    const urlKey = new URLSearchParams(window.location.search).get("key");
-    if (urlKey !== ADMIN_PORTAL_KEY) {
-      document.getElementById("locked").style.display = "block";
-    } else {
-      document.getElementById("content").style.display = "block";
-    }
+    // inject key from URL into field for convenience
+    const urlKey = new URLSearchParams(location.search).get('key') || '';
+    document.getElementById('adminKey').value = urlKey;
 
     document.getElementById('createBtn').addEventListener('click', async ()=>{
-      const body = {
-        company: document.getElementById('company').value,
-        phone: document.getElementById('phone').value,
-        password: document.getElementById('password').value,
-        telegram: document.getElementById('telegram').value
-      };
-      const res = await fetch('/api/admin/create-contractor', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      const key = document.getElementById('adminKey').value.trim();
+      const company = document.getElementById('company').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const telegram = document.getElementById('telegram').value.trim();
+      if(!key || !company || !phone || !password){ alert('Please provide admin key, company, phone and password'); return; }
+      const res = await fetch('/api/admin/create-contractor', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ key, company, phone, password, telegram }) });
       const j = await res.json();
-      if (j.ok) {
-        document.getElementById('result').innerText = 'Contractor created!';
-      } else {
-        document.getElementById('result').innerText = 'Error: ' + (j.error || 'unknown');
-      }
+      document.getElementById('result').textContent = j.ok ? 'Created contractor: ' + (j.contractor?.[0]?.id || 'OK') : 'Error: ' + (j.error || 'unknown');
     });
   </script>
 </body>
