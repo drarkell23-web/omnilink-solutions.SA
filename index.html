@@ -1,82 +1,96 @@
-<!-- index.html (paste to project root) -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Service Point SA — All Services</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/main.css">
-  <script type="module" src="public/supabase-client.js"></script>
-  <script src="assets/main.js" defer></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/main.css">
+  <link rel="stylesheet" href="/assets/chatbot.css">
+
+  <script defer src="/assets/main.js"></script>
+  <script defer src="/assets/chatbot.js"></script>
 </head>
 <body>
   <div id="app">
-    <aside id="leftSidebar">
+    <aside id="sidebar">
       <div class="brand">Service Point SA</div>
-      <div id="sidebarSearch">
-        <input id="searchInput" placeholder="Search services..." />
+      <div class="sidebar-block">
+        <div class="sidebar-title">Categories</div>
+        <div id="categories" class="categories-list"></div>
       </div>
-      <nav id="categoryList"></nav>
-      <div class="sidebar-footer">
-        <div>Top Contractors</div>
-        <div id="sidebarTop" class="sidebar-top"></div>
-        <a href="mailto:apply@servicepointsa.co" class="apply-link">Apply to become a contractor</a>
+      <div class="sidebar-block hide-on-mobile">
+        <div class="sidebar-title">Top Contractors</div>
+        <div id="topList" class="top-list"></div>
+      </div>
+      <div class="sidebar-block footer-mail">
+        <div>Want to be a contractor?</div>
+        <a href="mailto:apply@servicepointsa.co.za">apply@servicepointsa.co.za</a>
       </div>
     </aside>
 
-    <main id="mainContent">
-      <header class="main-header">
+    <main id="main">
+      <header id="mainHeader">
         <div class="header-left">
-          <h1>All Services</h1>
-          <div id="breadcrumb" class="muted">Choose a category on the left</div>
+          <button id="menuToggle" class="hamburger" aria-label="Toggle menu">☰</button>
+          <h1>Service Point SA — Find trusted local services</h1>
         </div>
         <div class="header-right">
-          <button id="openChatBtn" class="btn chat-btn">💬 Need Help?</button>
+          <input id="searchInput" placeholder="Search services or contractors..." />
         </div>
       </header>
 
-      <section id="servicesArea">
+      <section class="section">
+        <h2 class="section-title">All Services</h2>
         <div id="servicesGrid" class="services-grid"></div>
       </section>
 
-      <section id="testimonialsArea" class="panel">
-        <h3>Testimonials</h3>
+      <section class="section">
+        <h2 class="section-title">Testimonials</h2>
         <div id="testimonials" class="testimonials"></div>
       </section>
     </main>
   </div>
 
+  <!-- Chatbot Floating Button -->
+  <button id="chatOpen" class="chat-open-btn">💬 Need Help?</button>
+
   <!-- Chat Modal -->
   <div id="chatModal" class="chat-modal hidden" aria-hidden="true">
-    <div class="chat-shell">
-      <div class="chat-head">
+    <div class="chat-content">
+      <div class="chat-header">
         <div>Omni Assistant</div>
-        <button id="chatClose" class="icon">×</button>
+        <button id="chatClose" class="chat-close">×</button>
       </div>
-      <div class="chat-body">
-        <div id="chatFlow" class="chat-flow"></div>
 
-        <div id="contractorOptions" class="contractor-options"></div>
+      <div id="chatFlow" class="chat-flow"></div>
 
-        <form id="leadForm" class="lead-form">
-          <input id="leadName" placeholder="Full name" required />
-          <input id="leadPhone" placeholder="Phone" required />
-          <input id="leadEmail" placeholder="Email (optional)" />
-          <input id="leadService" placeholder="Service (prefilled)" required />
-          <textarea id="leadMessage" placeholder="Tell us about the job"></textarea>
-          <div class="row">
-            <button id="leadSubmit" class="btn primary">Send Request</button>
-          </div>
-        </form>
-      </div>
+      <form id="leadForm" class="lead-form">
+        <input id="leadName" placeholder="Full name" required />
+        <input id="leadPhone" placeholder="Phone (e.g. 0674099143)" required />
+        <input id="leadEmail" placeholder="Email (optional)" />
+        <input id="leadService" placeholder="Service needed" required />
+        <textarea id="leadMessage" placeholder="Describe the job (optional)"></textarea>
+
+        <div id="contractorPick" class="contractor-pick" style="display:none;">
+          <div class="contractor-pick-title">Choose a contractor (optional)</div>
+          <div id="contractorOptions" class="contractor-options"></div>
+        </div>
+
+        <div class="lead-actions">
+          <button type="submit" id="chatSend" class="btn primary">Send Request</button>
+          <button type="button" id="chatCancel" class="btn">Cancel</button>
+        </div>
+      </form>
     </div>
-    <canvas id="graffitiCanvas" class="graffiti-canvas"></canvas>
   </div>
 
-  <!-- contractor profile page skeleton (dynamic open) -->
-  <div id="profilePanel" class="profile-panel hidden"></div>
-
-  <script>/* small inline guard for older browsers */</script>
+  <!-- contractor profile template page (dynamic) -->
+  <!-- accessible at /c/<id> if server serves /c.html and JS loads by id -->
+  <script type="module">
+    // small deep-link handler for /c/<id> pages - if browser path contains /c/, JS may load profile
+    // main frontend file loads data and will show profile if path matches /c/<id>
+  </script>
 </body>
 </html>
