@@ -1,51 +1,68 @@
-<!-- contractor-dashboard.html (paste to project root) -->
 <!doctype html>
 <html>
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Contractor Dashboard — Service Point SA</title>
-<link rel="stylesheet" href="assets/main.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Contractor Dashboard — Service Point SA</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div style="max-width:1100px;margin:22px auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h2>Contractor Dashboard</h2>
-      <button id="logoutBtn" class="btn">Logout</button>
-    </div>
-
-    <div style="display:grid;grid-template-columns:320px 1fr;gap:14px">
-      <aside style="background:var(--panel);padding:14px;border-radius:10px">
-        <div id="profilePreview"><strong id="cName">Contractor</strong><div id="cService" class="muted"></div></div>
-        <div style="margin-top:12px">
-          <label>Telegram Chat ID</label>
-          <input id="fieldTelegramChatId" />
-          <label>Telegram Token</label>
-          <input id="fieldTelegramToken" />
-          <button id="saveProfileBtn" class="btn primary" style="width:100%;margin-top:10px">Save Profile</button>
-        </div>
-        <hr />
-        <div>
-          <h4>Premium</h4>
-          <p class="muted">Upgrade to the premium block to unlock advanced features (placeholder)</p>
-        </div>
-      </aside>
-
-      <section style="background:var(--panel);padding:14px;border-radius:10px">
-        <h3>Messages</h3>
-        <div id="chatBox" style="height:240px;overflow:auto;background:rgba(255,255,255,0.01);padding:8px;border-radius:8px"></div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <input id="msgInput" placeholder="Write a message to admin" style="flex:1;padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.02)" />
-          <button id="msgSend" class="btn">Send</button>
-        </div>
-
-        <hr />
-        <h3>Reviews</h3>
-        <div id="reviewsList"></div>
-      </section>
+  <div class="topbar">
+    <div class="brand">Service Point SA — Contractor Dashboard</div>
+    <div class="right">
+      <button id="logoutBtn" class="btn ghost">Logout</button>
     </div>
   </div>
 
-  <script type="module" src="public/contractor-dashboard-auth.js"></script>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="profile-mini" id="miniProfile">
+        <!-- filled by JS -->
+      </div>
+      <nav>
+        <button class="nav-btn" data-view="profile">Profile</button>
+        <button class="nav-btn" data-view="messages">Telegram Messages</button>
+        <button class="nav-btn" data-view="reviews">Reviews</button>
+        <button class="nav-btn" data-view="premium">Premium</button>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <section id="view-profile" class="view">
+        <h3>Profile</h3>
+        <div class="card">
+          <label>Company</label><input id="fieldCompany" />
+          <label>Phone</label><input id="fieldPhone" />
+          <label>Service</label><input id="fieldService" />
+          <label>Telegram Chat ID</label><input id="fieldTelegram" />
+          <button id="saveProfile" class="btn primary">Save Profile</button>
+        </div>
+      </section>
+
+      <section id="view-messages" class="view" style="display:none;">
+        <h3>Telegram Messages Panel</h3>
+        <div class="card" id="messagesPanel">
+          <div id="messagesList" style="max-height:360px;overflow:auto;"></div>
+          <textarea id="newMessage" placeholder="Send a message to admin or internal log..." style="width:100%;margin-top:10px"></textarea>
+          <button id="sendMessage" class="btn primary">Send</button>
+        </div>
+      </section>
+
+      <section id="view-reviews" class="view" style="display:none;">
+        <h3>Reviews</h3>
+        <div id="reviewsList" class="card"></div>
+      </section>
+
+      <section id="view-premium" class="view" style="display:none;">
+        <h3>Premium</h3>
+        <div class="card">
+          <p>Upgrade options, analytics, custom branding and priority leads will appear here.</p>
+          <button class="btn primary">Upgrade Now</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/contractor-dashboard.js" type="module"></script>
 </body>
 </html>
