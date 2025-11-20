@@ -1,1 +1,0 @@
-Add logos and images to public/assets and reference them in Header.jsx if needed.
