@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Service Point SA — Find Trusted Contractors</title>
+
+  <link rel="stylesheet" href="assets/main.css" />
+  <link rel="stylesheet" href="assets/chatbot.css" />
+
+  <script src="assets/main.js" defer></script>
+  <script src="assets/chatbot.js" defer></script>
+</head>
+<body>
+
+  <div id="app">
+    <aside id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Service Point SA" />
+        <h1>Service Point SA</h1>
+      </div>
+
+      <div class="search-wrap">
+        <input id="searchInput" placeholder="Search services or contractors..." />
+      </div>
+
+      <nav id="categoriesWrap">
+        <h3>Categories</h3>
+        <div id="categories" class="categories"></div>
+      </nav>
+
+      <div class="left-footer">
+        <div class="want">Want to be a contractor?</div>
+        <a href="mailto:renurture.solutions@gmail.com" class="apply">Email renurture.solutions@gmail.com</a>
+      </div>
+    </aside>
+
+    <main id="main">
+      <header class="topbar">
+        <div class="top-left">
+          <h2 id="pageTitle">All Services</h2>
+        </div>
+        <div class="top-right">
+          <button id="chatOpen" class="btn-ghost">💬 Service Assistant</button>
+        </div>
+      </header>
+
+      <section class="content">
+        <section class="services-section">
+          <h3>All Services</h3>
+          <div id="servicesGrid" class="services-grid"></div>
+        </section>
+
+        <aside class="right-column">
+          <section class="top-contractors">
+            <h4>Top Contractors</h4>
+            <div id="topList"></div>
+          </section>
+
+          <section class="reviews">
+            <h4>Recent Reviews</h4>
+            <div id="testimonials"></div>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <!-- CHATBOT / LEAD FORM -->
+  <div id="chatModal" class="chat-modal hidden" aria-hidden="true">
+    <div class="chat-card">
+      <div class="chat-header">
+        <div>
+          <strong>Service Assistant</strong>
+          <div class="muted small">Tell us what you need — we'll match a contractor.</div>
+        </div>
+        <button id="chatClose" class="close">×</button>
+      </div>
+
+      <div class="chat-body">
+        <div id="chatFlow" class="chat-flow"></div>
+
+        <form id="leadForm" class="lead-form">
+          <input id="leadName" placeholder="Your full name" />
+          <input id="leadPhone" placeholder="Phone number" />
+          <input id="leadEmail" placeholder="Email (optional)" />
+          <input id="leadService" placeholder="Service needed (choose from left)" readonly />
+          <textarea id="leadMessage" placeholder="Describe job / details"></textarea>
+
+          <div id="contractorPick" class="contractor-pick" style="display:none;">
+            <div class="muted small">Choose a contractor (optional)</div>
+            <div id="contractorOptions" class="contractor-options"></div>
+          </div>
+
+          <div class="form-row">
+            <button id="chatSend" class="btn-primary" type="button">Send Request</button>
+            <button id="clearBtn" class="btn-ghost" type="button">Clear</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    © <span id="year"></span> Service Point SA — renurture.solutions@gmail.com
+  </footer>
+
+</body>
+</html>
