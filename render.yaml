@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: service-point-main-site
+    env: static
+    rootDir: main-site-complete
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
