@@ -1,13 +1,16 @@
-// server.js — OmniLead API (Full integration: Supabase service role, bcryptjs, Telegram, admin create)
+// server.js — Omni / ServicePoint API (complete, production-ready patterns)
+// NOTE: Put your secrets in a .env file (SUPABASE_URL, SUPABASE_SERVICE_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID_ADMIN)
+// Do NOT commit .env to GitHub.
+
 import express from "express";
 import fileUpload from "express-fileupload";
-import { createClient } from "@supabase/supabase-js";
 import cors from "cors";
+import fs from "fs-extra";
 import path from "path";
-import fs from "fs";
 import dotenv from "dotenv";
-import bcrypt from "bcryptjs";
 import fetch from "node-fetch";
+import bcrypt from "bcryptjs";
+import { createClient } from "@supabase/supabase-js";
 
 dotenv.config();
 
@@ -16,170 +19,181 @@ app.use(cors());
 app.use(express.json());
 app.use(fileUpload());
 
-// environment
+// Env
 const PORT = process.env.PORT || 3000;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-const ADMIN_PORTAL_KEY = process.env.ADMIN_PORTAL_KEY; // secret key (string)
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID_ADMIN = process.env.TELEGRAM_CHAT_ID_ADMIN;
+const DATA_DIR = path.join(process.cwd(), "data");
 
-// supabase service client (optional fallback)
+// Ensure data dir exists for fallback
+fs.ensureDirSync(DATA_DIR);
+
+// Supabase client (service role) if configured
 let supabase = null;
 if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
   supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  console.log("Supabase service client enabled.");
+  console.log("Supabase: service client enabled");
 } else {
-  console.warn("Supabase service client NOT configured — using local JSON fallback for development.");
+  console.log("⚠ No Supabase configured — using local JSON fallback.");
 }
 
-// static files (public folder)
+// Serve static / public (if you have front-end files in public/)
 app.use(express.static("public"));
 app.use(express.static("."));
 
-// helper - telegram notify
-async function notifyTelegram(chatId, text) {
-  if (!TELEGRAM_BOT_TOKEN || !chatId) return;
+// -----------------------------
+// Utility: read local JSON fallback
+// -----------------------------
+async function readLocal(name, fallback = []) {
+  const file = path.join(DATA_DIR, name);
   try {
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" })
-    });
+    if (await fs.pathExists(file)) {
+      return await fs.readJson(file);
+    }
   } catch (e) {
-    console.warn("Telegram send failed:", e.message);
+    console.warn("readLocal error", e);
   }
+  return fallback;
+}
+async function writeLocal(name, data) {
+  const file = path.join(DATA_DIR, name);
+  await fs.writeJson(file, data, { spaces: 2 });
 }
 
-// -------------------------
-// ADMIN: serve admin page (inject key placeholder if needed)
-// -------------------------
-app.get("/admin-create-contractor.html", (req, res) => {
-  try {
-    const p = path.join(process.cwd(), "admin-create-contractor.html");
-    if (!fs.existsSync(p)) return res.status(404).send("Not found");
-    let html = fs.readFileSync(p, "utf8");
-    // inject admin key placeholder for page (not secure — page will POST header with key)
-    html = html.replace("{{ADMIN_PORTAL_KEY}}", ADMIN_PORTAL_KEY || "");
-    res.type("html").send(html);
-  } catch (e) {
-    res.status(500).send("Error reading admin page");
-  }
+// -----------------------------
+// Public demo data endpoints (services/contractors/reviews) - used when no supabase
+// -----------------------------
+app.get("/data/services.json", async (req, res) => {
+  const file = path.join(DATA_DIR, "services.json");
+  if (await fs.pathExists(file)) return res.sendFile(file);
+  return res.json({ services: [] });
+});
+app.get("/data/contractors.json", async (req, res) => {
+  const file = path.join(DATA_DIR, "contractors.json");
+  if (await fs.pathExists(file)) return res.sendFile(file);
+  return res.json({ contractors: [] });
+});
+app.get("/data/reviews.json", async (req, res) => {
+  const file = path.join(DATA_DIR, "reviews.json");
+  if (await fs.pathExists(file)) return res.sendFile(file);
+  return res.json({ reviews: [] });
 });
 
-// -------------------------
-// ADMIN: create contractor (admin key required)
-// Expects JSON: { company, phone, password, telegram }
-// -------------------------
-app.post("/api/admin/create-contractor", async (req, res) => {
+// -----------------------------
+// GET /api/services
+// -----------------------------
+app.get("/api/services", async (req, res) => {
   try {
-    const adminKey = req.headers["x-admin-key"] || req.query.key || "";
-    if (!ADMIN_PORTAL_KEY || adminKey !== ADMIN_PORTAL_KEY) {
-      return res.status(401).json({ ok: false, error: "Unauthorized (admin key)" });
-    }
-
-    const { company, phone, password, telegram } = req.body;
-    if (!company || !phone || !password) return res.json({ ok: false, error: "company, phone, password required" });
-
-    // hash password
-    const password_hash = await bcrypt.hash(password, 10);
-
-    // insert into contractors table (use supabase if configured)
     if (supabase) {
-      const { data, error } = await supabase
-        .from("contractors")
-        .insert([
-          {
-            company,
-            phone,
-            password_hash,
-            telegram_chat_id: telegram || null,
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select()
-        .maybeSingle();
-
-      if (error) return res.json({ ok: false, error: error.message });
-      return res.json({ ok: true, contractor: data });
+      const { data, error } = await supabase.from("services").select("*").order("name", { ascending: true }).limit(1000);
+      if (error) return res.status(500).json({ ok: false, error: error.message });
+      return res.json({ ok: true, services: data });
     } else {
-      // fallback: write to file data/contractors.json
-      const file = path.join(process.cwd(), "data", "contractors.json");
-      const arr = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : { contractors: [] };
-      const rec = { id: `local-${Date.now()}`, company, phone, password_hash, telegram_chat_id: telegram || null, created_at: new Date().toISOString() };
-      arr.contractors.unshift(rec);
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, JSON.stringify(arr, null, 2));
-      return res.json({ ok: true, contractor: rec });
+      const j = await readLocal("services.json", { services: [] });
+      return res.json(j);
     }
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json({ ok: false, error: String(e) });
   }
 });
 
-// -------------------------
-// CONTRACTOR LOGIN (phone + password)
-// returns contractor row (no JWT). Frontend stores contractor.id in localStorage for subsequent calls.
-// -------------------------
-app.post("/api/contractor/login", async (req, res) => {
-  try {
-    const { phone, password } = req.body;
-    if (!phone || !password) return res.status(400).json({ ok: false, error: "phone and password required" });
-
-    if (supabase) {
-      const { data: contractor, error } = await supabase.from("contractors").select("*").eq("phone", phone).maybeSingle();
-      if (error || !contractor) return res.status(400).json({ ok: false, error: "Contractor not found" });
-
-      const ok = await bcrypt.compare(password, contractor.password_hash || "");
-      if (!ok) return res.status(401).json({ ok: false, error: "Invalid password" });
-
-      return res.json({ ok: true, contractor });
-    } else {
-      const file = path.join(process.cwd(), "data", "contractors.json");
-      if (!fs.existsSync(file)) return res.status(400).json({ ok: false, error: "No contractors configured" });
-      const arr = JSON.parse(fs.readFileSync(file)).contractors || [];
-      const contractor = arr.find(c => c.phone === phone);
-      if (!contractor) return res.status(400).json({ ok: false, error: "Contractor not found" });
-      const ok = await bcrypt.compare(password, contractor.password_hash || "");
-      if (!ok) return res.status(401).json({ ok: false, error: "Invalid password" });
-      return res.json({ ok: true, contractor });
-    }
-  } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message });
-  }
-});
-
-// -------------------------
-// GET contractors (public)
-// -------------------------
+// -----------------------------
+// GET /api/contractors
+// -----------------------------
 app.get("/api/contractors", async (req, res) => {
   try {
     if (supabase) {
-      const { data, error } = await supabase.from("contractors").select("id,company,phone,telegram_chat_id,logo_url,service,badge,created_at").order("created_at", { ascending: false }).limit(500);
+      const { data, error } = await supabase.from("contractors").select("*").order("created_at", { ascending: false }).limit(1000);
       if (error) return res.status(500).json({ ok: false, error: error.message });
       return res.json({ ok: true, contractors: data });
     } else {
-      const file = path.join(process.cwd(), "data", "contractors.json");
-      if (!fs.existsSync(file)) return res.json({ ok: true, contractors: [] });
-      const arr = JSON.parse(fs.readFileSync(file)).contractors || [];
-      return res.json({ ok: true, contractors: arr });
+      const j = await readLocal("contractors.json", { contractors: [] });
+      return res.json(j);
     }
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json({ ok: false, error: String(e) });
   }
 });
 
-// -------------------------
-// POST lead -> save + telegram notify (admin or contractor)
-// payload: { name, phone, email, service, message, contractorId, source }
-// -------------------------
+// -----------------------------
+// POST /api/admin/create-contractor
+// (ADMIN endpoint; server will hash password and insert contractor row - do NOT expose publicly)
+// -----------------------------
+app.post("/api/admin/create-contractor", async (req, res) => {
+  try {
+    const { company, phone, password, telegram } = req.body;
+    if (!company || !phone || !password) return res.status(400).json({ ok: false, error: "company, phone and password required" });
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const row = {
+      company,
+      phone,
+      password_hash,
+      telegram_chat_id: telegram || null,
+      created_at: new Date().toISOString()
+    };
+
+    if (supabase) {
+      const { data, error } = await supabase.from("contractors").insert([row]).select().maybeSingle();
+      if (error) return res.status(500).json({ ok: false, error: error.message });
+      return res.json({ ok: true, contractor: data });
+    } else {
+      // fallback local file
+      const j = await readLocal("contractors.json", { contractors: [] });
+      j.contractors = j.contractors || [];
+      // create basic id
+      row.id = "local_" + Date.now();
+      j.contractors.unshift(row);
+      await writeLocal("contractors.json", j);
+      return res.json({ ok: true, contractor: row });
+    }
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e) });
+  }
+});
+
+// -----------------------------
+// POST /api/contractor/login  (phone + password) -> returns contractor info if valid
+// -----------------------------
+app.post("/api/contractor/login", async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+    if (!phone || !password) return res.status(400).json({ ok: false, error: "phone + password required" });
+
+    if (supabase) {
+      const { data, error } = await supabase.from("contractors").select("*").eq("phone", phone).maybeSingle();
+      if (error) return res.status(500).json({ ok: false, error: error.message });
+      if (!data) return res.status(404).json({ ok: false, error: "contractor not found" });
+      const match = await bcrypt.compare(password, data.password_hash || "");
+      if (!match) return res.status(401).json({ ok: false, error: "invalid credentials" });
+      // hide password hash
+      delete data.password_hash;
+      return res.json({ ok: true, contractor: data });
+    } else {
+      const j = await readLocal("contractors.json", { contractors: [] });
+      const c = (j.contractors || []).find(x => x.phone === phone);
+      if (!c) return res.status(404).json({ ok: false, error: "contractor not found" });
+      const match = await bcrypt.compare(password, c.password_hash || "");
+      if (!match) return res.status(401).json({ ok: false, error: "invalid credentials" });
+      const copy = { ...c }; delete copy.password_hash;
+      return res.json({ ok: true, contractor: copy });
+    }
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e) });
+  }
+});
+
+// -----------------------------
+// POST /api/lead  -> Save lead to Supabase or local fallback, then notify via Telegram
+// -----------------------------
 app.post("/api/lead", async (req, res) => {
   try {
     const { name, phone, email, service, message, contractorId, source } = req.body;
-    if (!name || !phone || !service) return res.status(400).json({ ok: false, error: "name, phone, service required" });
+    if (!name || !phone || !service) return res.status(400).json({ ok: false, error: "name, phone and service are required" });
 
-    const row = {
+    const leadRow = {
       name,
       phone,
       email: email || null,
@@ -192,168 +206,126 @@ app.post("/api/lead", async (req, res) => {
 
     let saved = null;
     if (supabase) {
-      const { data, error } = await supabase.from("leads").insert([row]).select().maybeSingle();
-      if (error) console.warn("Lead save error:", error.message);
+      const { data, error } = await supabase.from("leads").insert([leadRow]).select().maybeSingle();
+      if (error) console.warn("Supabase lead save error:", error.message);
       else saved = data;
     } else {
-      const file = path.join(process.cwd(), "data", "leads.json");
-      const arr = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
-      arr.unshift(row);
-      fs.writeFileSync(file, JSON.stringify(arr, null, 2));
-      saved = row;
+      const arr = await readLocal("leads.json", []);
+      arr.unshift(leadRow);
+      await writeLocal("leads.json", arr);
+      saved = leadRow;
     }
 
-    // notify: if contractorId and contractor has telegram_chat_id => send there; else admin
-    let chatTarget = TELEGRAM_CHAT_ID_ADMIN || null;
-    if (contractorId && supabase) {
-      const { data: c } = await supabase.from("contractors").select("telegram_chat_id,company").eq("id", contractorId).maybeSingle();
-      if (c && c.telegram_chat_id) chatTarget = c.telegram_chat_id;
-    } else if (contractorId && !supabase) {
-      const file = path.join(process.cwd(), "data", "contractors.json");
-      const arr = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)).contractors : [];
-      const c = arr.find(x => x.id === contractorId);
-      if (c && c.telegram_chat_id) chatTarget = c.telegram_chat_id;
-    }
-
-    const txt = `📩 *New Lead*\n*Name:* ${name}\n*Phone:* ${phone}\n*Service:* ${service}\n*Message:* ${message || "-" }\n*Source:* ${source || "web"}`;
-    if (chatTarget) await notifyTelegram(chatTarget, txt);
+    // Notify via Telegram
+    (async () => {
+      try {
+        let chatTarget = TELEGRAM_CHAT_ID_ADMIN;
+        if (contractorId && supabase) {
+          const { data: c } = await supabase.from("contractors").select("telegram_chat_id,company").eq("id", contractorId).maybeSingle();
+          if (c && c.telegram_chat_id) chatTarget = c.telegram_chat_id;
+        } else if (contractorId) {
+          // local fallback: try local contractors file
+          const local = await readLocal("contractors.json", { contractors: [] });
+          const cc = (local.contractors || []).find(x => x.id === contractorId);
+          if (cc && cc.telegram_chat_id) chatTarget = cc.telegram_chat_id;
+        }
+        if (TELEGRAM_BOT_TOKEN && chatTarget) {
+          const msg = `📩 *New Lead*\n*Name:* ${name}\n*Phone:* ${phone}\n*Service:* ${service}\n*Message:* ${message || "-"}\n*Source:* ${source || "web"}`;
+          const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+          await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatTarget, text: msg, parse_mode: "Markdown" })
+          });
+        }
+      } catch (err) {
+        console.warn("Telegram notify failed:", err.message || err);
+      }
+    })();
 
     return res.json({ ok: true, lead: saved });
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json({ ok: false, error: String(e) });
   }
 });
 
-// -------------------------
-// POST message (contractor -> admin chat)
-// { contractorId, message }
-// -------------------------
-app.post("/api/message", async (req, res) => {
+// -----------------------------
+// GET /api/leads -> list leads (admin)
+app.get("/api/leads", async (req, res) => {
   try {
-    const { contractorId, message } = req.body;
-    if (!contractorId || !message) return res.status(400).json({ ok: false, error: "contractorId and message required" });
-
-    const row = { contractor_id: contractorId, message, created_at: new Date().toISOString() };
-
     if (supabase) {
-      const { data, error } = await supabase.from("messages").insert([row]).select().maybeSingle();
-      if (error) return res.status(500).json({ ok: false, error: error.message });
-      // notify admin
-      await notifyTelegram(TELEGRAM_CHAT_ID_ADMIN, `💬 Message from contractor ${contractorId}:\n${message}`);
-      return res.json({ ok: true, message: data });
-    } else {
-      const file = path.join(process.cwd(), "data", "messages.json");
-      const arr = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
-      arr.unshift(row);
-      fs.writeFileSync(file, JSON.stringify(arr, null, 2));
-      await notifyTelegram(TELEGRAM_CHAT_ID_ADMIN, `💬 Message from contractor ${contractorId}:\n${message}`);
-      return res.json({ ok: true, message: row });
-    }
-  } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message });
-  }
-});
-
-// -------------------------
-// GET contractor leads (private-ish) - expects x-contractor-id header
-// -------------------------
-app.get("/api/my/leads", async (req, res) => {
-  try {
-    const contractorId = req.headers["x-contractor-id"] || req.query.contractorId;
-    if (!contractorId) return res.status(400).json({ ok: false, error: "missing contractor id header" });
-
-    if (supabase) {
-      const { data, error } = await supabase.from("leads").select("*").eq("contractor_id", contractorId).order("created_at", { ascending: false }).limit(500);
+      const { data, error } = await supabase.from("leads").select("*").order("created_at", { ascending: false }).limit(1000);
       if (error) return res.status(500).json({ ok: false, error: error.message });
       return res.json({ ok: true, leads: data });
     } else {
-      const file = path.join(process.cwd(), "data", "leads.json");
-      const arr = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
-      const filtered = arr.filter(l => l.contractor_id === contractorId);
-      return res.json({ ok: true, leads: filtered });
+      const arr = await readLocal("leads.json", []);
+      return res.json({ ok: true, leads: arr });
     }
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json({ ok: false, error: String(e) });
   }
 });
 
-// -------------------------
-// GET contractor messages (private-ish)
-// -------------------------
-app.get("/api/my/messages", async (req, res) => {
+// -----------------------------
+// Messages table for contractor<-admin messaging (simple)
+app.post("/api/message", async (req, res) => {
   try {
-    const contractorId = req.headers["x-contractor-id"] || req.query.contractorId;
-    if (!contractorId) return res.status(400).json({ ok: false, error: "missing contractor id header" });
-
+    const { contractorId, sender, message } = req.body;
+    if (!sender || !message) return res.status(400).json({ ok: false, error: "sender and message required" });
+    const row = { contractor_id: contractorId || null, sender, message, created_at: new Date().toISOString() };
     if (supabase) {
-      const { data, error } = await supabase.from("messages").select("*").eq("contractor_id", contractorId).order("created_at", { ascending: false }).limit(500);
+      const { data, error } = await supabase.from("messages").insert([row]).select().maybeSingle();
+      if (error) return res.status(500).json({ ok: false, error: error.message });
+      return res.json({ ok: true, message: data });
+    } else {
+      const arr = await readLocal("messages.json", []);
+      arr.unshift(row);
+      await writeLocal("messages.json", arr);
+      return res.json({ ok: true, message: row });
+    }
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e) });
+  }
+});
+
+app.get("/api/messages", async (req, res) => {
+  try {
+    if (supabase) {
+      const { data, error } = await supabase.from("messages").select("*").order("created_at", { ascending: false }).limit(1000);
       if (error) return res.status(500).json({ ok: false, error: error.message });
       return res.json({ ok: true, messages: data });
     } else {
-      const file = path.join(process.cwd(), "data", "messages.json");
-      const arr = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
-      const filtered = arr.filter(m => m.contractor_id === contractorId);
-      return res.json({ ok: true, messages: filtered });
+      const arr = await readLocal("messages.json", []);
+      return res.json({ ok: true, messages: arr });
     }
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json({ ok: false, error: String(e) });
   }
 });
 
-// -------------------------
-// POST review with optional file upload (multipart/form-data) - review images stored in Supabase storage if available
-// -------------------------
-app.post("/api/review", async (req, res) => {
+// -----------------------------
+// Basic contractor profile endpoint (public)
+// GET /c/:id -> returns contractor data
+app.get("/api/contractor/:id", async (req, res) => {
   try {
-    const contractorId = req.body.contractor || req.body.contractor_id;
-    const reviewer_name = req.body.name || req.body.reviewer_name || "Customer";
-    const rating = Number(req.body.rating || 5);
-    const comment = req.body.comment || "";
-    const images = [];
-
-    if (req.files) {
-      for (const key of Object.keys(req.files)) {
-        const file = req.files[key];
-        if (supabase) {
-          const filePath = `reviews/${Date.now()}-${file.name.replace(/\s/g, "_")}`;
-          const upload = await supabase.storage.from("contractor-assets").upload(filePath, file.data, { upsert: true, contentType: file.mimetype });
-          if (!upload.error) {
-            const url = supabase.storage.from("contractor-assets").getPublicUrl(filePath).data.publicUrl;
-            images.push(url);
-          }
-        } else {
-          // fallback: ignore file or save to /public/uploads
-          const uploadsDir = path.join(process.cwd(), "public", "uploads");
-          fs.mkdirSync(uploadsDir, { recursive: true });
-          const outPath = path.join(uploadsDir, `${Date.now()}-${file.name.replace(/\s/g, "_")}`);
-          fs.writeFileSync(outPath, file.data);
-          images.push(`/uploads/${path.basename(outPath)}`);
-        }
-      }
-    }
-
-    const row = { contractor_id: contractorId || null, reviewer_name, rating, comment, images, created_at: new Date().toISOString() };
-
+    const id = req.params.id;
     if (supabase) {
-      const { data, error } = await supabase.from("reviews").insert([row]).select().maybeSingle();
+      const { data, error } = await supabase.from("contractors").select("*").eq("id", id).maybeSingle();
       if (error) return res.status(500).json({ ok: false, error: error.message });
-      return res.json({ ok: true, review: data });
+      return res.json({ ok: true, contractor: data });
     } else {
-      const file = path.join(process.cwd(), "data", "reviews.json");
-      const arr = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
-      arr.unshift(row);
-      fs.writeFileSync(file, JSON.stringify(arr, null, 2));
-      return res.json({ ok: true, review: row });
+      const j = await readLocal("contractors.json", { contractors: [] });
+      const c = (j.contractors || []).find(x => String(x.id) === String(id));
+      return res.json({ ok: true, contractor: c || null });
     }
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json({ ok: false, error: String(e) });
   }
 });
 
-// catch-all 404
-app.use((req, res) => res.status(404).send("Not found"));
-
-// start
+// -----------------------------
+// Start server
+// -----------------------------
 app.listen(PORT, () => {
-  console.log(`OmniLead API running on ${PORT}`);
+  console.log(`Main site API running on port ${PORT}`);
 });
