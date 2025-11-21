@@ -1,14 +1,29 @@
-# Admin Dashboard
+# Dyllon's Service Point — Main Site (Frontend)
 
-Open index.html locally. This page callsAdmin Dashboard (Static package)
---------------------------------
+**What this is:** A production-ready React + Vite + Tailwind frontend scaffold for the main public site.
+Includes Supabase integration scaffolding and ready-to-deploy build.
 
-How to use:
-1. Replace API_BASE in app.js with your Render API base (example: https://service-point-sa-1.onrender.com).
-2. To create contractors you may need to supply the admin key in the "Admin key" field (depends on your server setup).
-3. Zip this folder and keep private. This static admin page talks to your Render API endpoints:
-   - POST /api/admin/create-contractor
-   - GET /api/contractors
-   - GET /api/leads
-   - GET /api/reviews
- `/api/admin/create-contractor` on your server. Keep your service key safe.
+## Structure
+- `index.html` — app entry
+- `src/` — React app source
+- `src/pages/` — page components (Home, AdminLanding, Auth)
+- `src/components/` — shared components (Header, Footer)
+- `src/utils/` — supabase client helper
+- `public/assets/` — images & assets
+- `tailwind.config.cjs`, `postcss.config.cjs` — Tailwind setup
+- `.env.example` — env vars
+
+## Install (local)
+1. `npm install`
+2. Create `.env` using `.env.example` and fill in your Supabase values.
+3. `npm run dev` — development server
+4. `npm run build` — production build
+5. `npm run preview` — preview production build
+
+## GitHub & Deploy
+- This repo is ready for GitHub. Add `render.yaml` or Vercel/Netlify settings if you deploy there.
+- Suggested branch: `main`. Add GitHub Actions / Render config as needed.
+
+## Notes
+- Replace placeholder logos in `public/assets/`.
+- Admin pages are scaffolded — for a full working admin you need backend or Supabase table rules which this frontend expects.

@@ -1,14 +1,27 @@
 {
-  "name": "service-point-monorepo",
+  "name": "dyllons-service-point-main",
+  "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "main-site-complete",
-    "admin-dashboard-complete/frontend",
-    "admin-dashboard-complete/backend",
-    "contractor-dashboard-complete"
-  ],
+  "description": "Main site for Dyllon's Service Point - React + Vite + Tailwind",
   "scripts": {
-    "build": "echo \"Monorepo root — build inside subfolders\"",
-    "start": "echo \"Monorepo root — start inside subfolders\""
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .js,.jsx",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.28.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.4.0",
+    "vite": "^5.0.0",
+    "eslint": "^8.44.0",
+    "prettier": "^3.0.0"
   }
 }
