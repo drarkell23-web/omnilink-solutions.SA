@@ -1,7 +1,28 @@
 services:
   - type: web
-    name: service-point-main-site
+    name: service-point-main
     env: static
     rootDir: main-site-complete
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+
+  - type: web
+    name: service-point-admin-app
+    env: static
+    rootDir: admin-dashboard-complete/frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+
+  - type: web
+    name: service-point-admin-api
+    env: node
+    rootDir: admin-dashboard-complete/backend
+    buildCommand: npm install
+    startCommand: npm start
+
+  - type: web
+    name: service-point-contractor-app
+    env: static
+    rootDir: contractor-dashboard-complete
     buildCommand: npm install && npm run build
     staticPublishPath: dist
